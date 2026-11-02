@@ -1,1 +1,1239 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Migräne Tracker</title>
+  <meta name="description" content="Migräne Tracker – Schmerz, Auslöser und Medikamente sanft im Blick behalten.">
+  <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Migräne">
 
+  <!-- Dark Mode vor dem ersten Rendern setzen, damit nichts aufblitzt -->
+  <script>
+    function grow(el) { el.style.height = 'auto'; if (el.scrollHeight) el.style.height = el.scrollHeight + 'px'; }
+    try {
+      // 'overall-theme' teilen sich alle Apps auf mvs2-bot.github.io
+      const t = localStorage.getItem('overall-theme');
+      if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+    } catch (_) {}
+  </script>
+
+  <style>
+    /* Migräne Tracker – Designsprache von DailyMind und dem mvs2-Dashboard:
+       Systemschrift, Überschriften in New York, weiße Karten auf Grau, Linien-Symbole.
+       Akzent Pflaume (lila ist die Farbe der Migräne-Aufklärung), Intensität von Salbei über Bernstein bis Himbeere. */
+    :root {
+      --bg: #f2f2f7; --card: #fff; --well: #f2f2f7; --hover: #e9e9ef; --line: #e2e2e7; --sep: rgba(60, 60, 67, .14);
+      --ink: #1c1c1e; --text: #3a3a3c; --mute: #6c6c70;
+      --p1: #7a4a8f; --p1-soft: #f3ecf6; --on-p1: #fff;
+      --lv0: #4a7356; --lv1: #c98a12; --lv2: #d9622b; --lv3: #c2364a;
+      --lv0-soft: #e7f0e9; --lv1-soft: #fbf0d9; --lv2-soft: #fbe5d9; --lv3-soft: #f9dfe3;
+      --ok: #248a3d; --warn: #b25000; --danger: #d70015; --danger-soft: #ffe6e8;
+      --radius: 18px; --radius-s: 12px; --shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 4px 14px rgba(0, 0, 0, .04);
+      --pop: 0 12px 40px rgba(0, 0, 0, .18), 0 0 0 .5px rgba(0, 0, 0, .06);
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      --serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
+      /* Namen, die ios-nav.js erwartet */
+      --border: var(--line); --accent: var(--p1); --card-hover: var(--hover); --muted: var(--mute);
+      color-scheme: light;
+    }
+    .dark {
+      color-scheme: dark; --bg: #000; --card: #1c1c1e; --well: #2c2c2e; --hover: #3a3a3c; --line: #38383a; --sep: rgba(84, 84, 88, .55);
+      --ink: #f5f5f7; --text: #d1d1d6; --mute: #98989f;
+      --p1: #cfa6e6; --p1-soft: #2a1d31; --on-p1: #24102e;
+      --lv0: #8fc49c; --lv1: #ffc95c; --lv2: #ff9a5c; --lv3: #ff7a8a;
+      --lv0-soft: #15281a; --lv1-soft: #33280b; --lv2-soft: #3a1e0e; --lv3-soft: #3d1419;
+      --ok: #30d158; --warn: #ffb340; --danger: #ff6961; --danger-soft: #3a1412;
+      --shadow: none; --pop: 0 16px 48px rgba(0, 0, 0, .6), 0 0 0 .5px rgba(255, 255, 255, .08);
+    }
+    [x-cloak], [hidden] { display: none !important; }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); -webkit-text-size-adjust: 100%; }
+    body { margin: 0; min-height: 100vh; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.45; letter-spacing: -.005em;
+      -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+    ::selection { background: color-mix(in srgb, var(--p1) 28%, transparent); color: var(--ink); }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: default; }
+    :focus-visible { outline: 2px solid var(--p1); outline-offset: 2px; }
+    h1, h2, h3, h4, p { margin: 0; }
+    .ic { width: 1.25em; height: 1.25em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+    h1, h2, .card h3, .gate h2, .greet b, .stat b { font-family: var(--serif); letter-spacing: -.01em; }
+
+    /* ---------------- Kopf ---------------- */
+    header { position: sticky; top: 0; z-index: 20; padding-top: env(safe-area-inset-top, 0px);
+      background: color-mix(in srgb, var(--bg) 82%, transparent); -webkit-backdrop-filter: saturate(1.8) blur(18px); backdrop-filter: saturate(1.8) blur(18px); }
+    header .wrap { padding-bottom: 0; }
+    .bar { display: flex; align-items: center; gap: 12px; padding-block: 12px 10px; }
+    .bar .logo { width: 36px; height: 36px; flex: none; border-radius: 9px; }
+    .bar .head { flex: 1; min-width: 0; }
+    h1 { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub { font-size: 12px; font-weight: 500; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .acts { display: flex; gap: 8px; flex: none; align-items: center; }
+    .icon-btn { position: relative; overflow: hidden; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--card); color: var(--ink); box-shadow: var(--shadow);
+      display: inline-grid; place-items: center; padding: 0; transition: background .15s; }
+    .icon-btn:hover { background: var(--hover); }
+    .icon-btn:disabled { opacity: .35; }
+    .icon-btn .ic { width: 18px; height: 18px; }
+    .icon-btn img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+    /* kleiner Sync-Punkt am Profilknopf */
+    .me .sync-dot { position: absolute; right: -1px; bottom: -1px; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--bg); background: var(--ok); pointer-events: none; }
+    .sync-dot.pending { background: var(--warn); } .sync-dot.error { background: var(--danger); }
+    .seg.nav-top { display: none; }
+
+    /* Kontomenü */
+    .me { position: relative; }
+    .pm-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 290px; max-width: calc(100vw - 32px); padding: 6px; color: var(--text); border-radius: 14px; box-shadow: var(--pop); background: var(--card); }
+    .pm-head { display: flex; gap: 10px; align-items: center; padding: 8px 10px 10px; min-width: 0; }
+    .pm-head > div { min-width: 0; }
+    .pm-head b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-head small { display: block; font-size: 12px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-ava { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 600; }
+    .pm-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pm-sync { display: flex; align-items: center; gap: 8px; margin: 0 4px 6px; padding: 8px 10px; border-radius: 10px; background: var(--well); font-size: 12px; color: var(--text); }
+    .pm-sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+    .pm-sync i.pending { background: var(--warn); } .pm-sync i.error { background: var(--danger); }
+    .pm-sync span { min-width: 0; }
+    .pm-sync b { font-weight: 600; color: var(--ink); }
+    .pm-role { display: inline-block; margin-top: 3px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--p1-soft); color: var(--p1); }
+    .pm-item { display: flex; width: 100%; align-items: center; gap: 10px; min-height: 40px; padding: 8px 10px; border: 0; border-radius: 8px;
+      background: none; color: var(--ink); font-size: 14px; font-weight: 500; text-align: left; text-decoration: none; }
+    .pm-item .ic { width: 18px; height: 18px; color: var(--mute); }
+    .pm-item:hover, .pm-item:focus-visible { background: var(--hover); outline: none; }
+    .pm-item small { margin-left: auto; font-size: 11px; color: var(--mute); white-space: nowrap; }
+    .pm-item.danger, .pm-item.danger .ic { color: var(--danger); }
+    .pm-sep { height: 1px; margin: 4px 6px; background: var(--sep); }
+
+    /* Segmente wie in iOS */
+    .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: color-mix(in srgb, var(--mute) 14%, transparent); border-radius: 9px; padding: 2px; gap: 2px; }
+    .seg button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; background: none; border-radius: 7px; padding: 6px 12px; min-height: 32px;
+      font-size: 13px; font-weight: 500; color: var(--ink); transition: background .15s; white-space: nowrap; }
+    .seg button[aria-pressed="true"] { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); font-weight: 600; }
+    .dark .seg button[aria-pressed="true"] { background: #636366; }
+    .tabs { margin: 8px 0 16px; }
+
+    /* ---------------- Karten ---------------- */
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; min-width: 0; }
+    .card h3 { font-size: 17px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+    .card .hint { font-size: 12px; color: var(--mute); margin-top: 2px; }
+    .card-head { display: flex; align-items: center; gap: 10px; }
+    .card-head > div { flex: 1; min-width: 0; }
+    .badge-ic { flex: none; width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; background: var(--p1-soft); color: var(--p1); }
+    .badge-ic .ic { width: 16px; height: 16px; }
+
+    /* Begrüßung */
+    .greet { display: flex; align-items: center; gap: 14px; padding: 2px 2px 0; }
+    .greet > div { min-width: 0; }
+    .greet .eyebrow { font-size: 12px; font-weight: 600; color: var(--mute); text-transform: none; }
+    .greet b { display: block; font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.2; text-wrap: balance; }
+    .greet span { display: block; margin-top: 2px; font-size: 13px; color: var(--text); text-wrap: pretty; }
+
+    /* Dashboard-Raster: auf dem Handy eine Spalte in fester Reihenfolge */
+    .dash { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: "greet" "capture" "medhint" "stats" "cal" "recent"; }
+    .a-greet { grid-area: greet; } .a-capture { grid-area: capture; } .a-stats { grid-area: stats; }
+    .a-cal { grid-area: cal; } .a-recent { grid-area: recent; } .a-medhint { grid-area: medhint; }
+
+    /* ---------------- Erfassung ---------------- */
+    .day { display: flex; align-items: center; gap: 10px; }
+    .day .mid { flex: 1; min-width: 0; }
+    .day .eyebrow { font-size: 12px; font-weight: 600; color: var(--mute); }
+    .day h3 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .day .icon-btn { background: var(--well); box-shadow: none; width: 40px; height: 40px; }
+    .link { display: inline-block; padding: 2px 0; border: 0; background: none; font-size: 13px; font-weight: 600; color: var(--p1); text-decoration: none; }
+    .link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+    .block { margin-top: 18px; }
+    .block > .lbl { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
+    .block > .lbl small { font-size: 12px; font-weight: 500; color: var(--mute); }
+    .block > .lbl small.lv { font-weight: 600; }
+
+    /* Schmerzskala 0–10: Handy 6 Spalten (je ≥ 44 px), ab 480 px alle 11 nebeneinander */
+    .scale { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+    .scale button { --c: var(--lv0); position: relative; min-height: 48px; border: 0; border-radius: var(--radius-s); background: var(--well); color: var(--ink);
+      font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; transition: background .15s, color .15s, transform .1s; }
+    .scale button::after { content: ""; position: absolute; left: 30%; right: 30%; bottom: 6px; height: 3px; border-radius: 2px; background: var(--c); opacity: .75; }
+    .scale button:hover { background: var(--hover); }
+    .scale button:active { transform: scale(.96); }
+    .scale button[aria-pressed="true"] { background: var(--c); color: #fff; }
+    .dark .scale button[aria-pressed="true"] { color: #1c1c1e; }
+    .scale button[aria-pressed="true"]::after { background: currentColor; opacity: .55; }
+    .scale-ends { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--mute); }
+
+    /* Phasen */
+    .phases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .phases button { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 12px; border: 0; border-radius: var(--radius-s); background: var(--well); color: var(--ink);
+      font-size: 14px; font-weight: 500; text-align: left; transition: background .15s; }
+    .phases button .ic { width: 20px; height: 20px; color: var(--mute); }
+    .phases button:hover { background: var(--hover); }
+    .phases button[aria-pressed="true"] { background: var(--p1-soft); color: var(--p1); font-weight: 600; box-shadow: inset 0 0 0 1.5px var(--p1); }
+    .phases button[aria-pressed="true"] .ic { color: var(--p1); }
+
+    /* Chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--well); color: var(--ink);
+      font-size: 14px; font-weight: 500; transition: background .15s, color .15s; max-width: 100%; }
+    .chip:hover { background: var(--hover); }
+    .chip[aria-pressed="true"] { background: var(--p1); color: var(--on-p1); font-weight: 600; }
+    .chip .ic { width: 15px; height: 15px; }
+    .chip.add { background: none; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--mute); }
+    .chip-input { display: flex; gap: 6px; margin-top: 8px; }
+    .chip-input input { flex: 1; min-width: 0; min-height: 40px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--well); font-size: 15px; color: var(--ink); }
+    .chip-input input:focus { outline: 2px solid var(--p1); outline-offset: 0; }
+
+    .inline { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-top: 10px; }
+    .time { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--mute); }
+    .time input { min-height: 40px; padding: 6px 10px; border: 0; border-radius: 10px; background: var(--well); color: var(--ink); font-size: 15px; font-variant-numeric: tabular-nums; }
+    .time input:focus { outline: 2px solid var(--p1); outline-offset: 0; }
+    .seg.choice { flex: 1 1 260px; }
+    .seg.choice button { min-height: 40px; white-space: normal; line-height: 1.2; padding: 6px 8px; }
+
+    .area { padding: 2px 12px; border-radius: var(--radius-s); background: var(--well); }
+    .area:focus-within { box-shadow: inset 0 0 0 1.5px var(--p1); }
+    .field { width: 100%; min-width: 0; padding: 11px 0; border: 0; background: none; outline: none; font-size: 15px; color: var(--ink); line-height: 1.4; resize: none; display: block; }
+    .field::placeholder { color: color-mix(in srgb, var(--mute) 60%, transparent); }
+
+    details.more { margin-top: 18px; border-top: 1px solid var(--sep); }
+    details.more summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; padding-top: 4px; cursor: pointer;
+      font-size: 14px; font-weight: 600; color: var(--ink); }
+    details.more summary::-webkit-details-marker { display: none; }
+    details.more summary small { font-weight: 500; color: var(--mute); font-size: 12px; margin-left: auto; }
+    details.more summary .ic { width: 16px; height: 16px; color: var(--mute); transition: transform .2s; }
+    details.more[open] summary .ic { transform: rotate(90deg); }
+    details.more .block:first-of-type { margin-top: 6px; }
+
+    .status { margin-top: 14px; min-height: 18px; text-align: center; font-size: 12px; font-weight: 500; color: var(--mute); }
+    .status.err { color: var(--danger); }
+    .status.pending { color: var(--warn); }
+
+    /* ---------------- Statistik ---------------- */
+    .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .stat { display: flex; flex-direction: column; gap: 4px; padding: 14px; }
+    .stat .top { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--mute); min-width: 0; }
+    .stat .top span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stat .top .ic { width: 16px; height: 16px; color: var(--p1); }
+    .stat b { font-size: 26px; font-weight: 700; color: var(--ink); line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .stat b.word { font-size: 19px; line-height: 1.25; }
+    .stat b small { font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--mute); }
+    .stat p { font-size: 12px; color: var(--mute); text-wrap: pretty; }
+    .stat p .up { color: var(--lv3); font-weight: 600; } .stat p .down { color: var(--ok); font-weight: 600; }
+
+    .medhint { display: flex; gap: 12px; align-items: flex-start; background: var(--lv1-soft); box-shadow: none; }
+    .medhint .ic { width: 20px; height: 20px; color: var(--lv1); margin-top: 1px; }
+    .medhint p { font-size: 13px; color: var(--text); }
+    .medhint b { color: var(--ink); }
+
+    /* ---------------- Kalender ---------------- */
+    .cal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .cal-head h3 { text-align: center; flex: 1; }
+    .cal-head .icon-btn { background: var(--well); box-shadow: none; width: 40px; height: 40px; }
+    .wk, .days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .wk { margin-top: 12px; text-align: center; font-size: 11px; font-weight: 600; color: var(--mute); padding: 4px 0; }
+    .days button { --c: transparent; position: relative; min-height: 44px; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      border: 0; border-radius: 12px; background: none; font-size: 15px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; transition: background .15s; padding: 0; }
+    .days button:not(:disabled):hover { background: var(--hover); }
+    .days button.has { background: color-mix(in srgb, var(--c) 18%, transparent); }
+    .days button.has.l3 { background: color-mix(in srgb, var(--c) 26%, transparent); }
+    .days button .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+    .days button:not(.has) .dot { visibility: hidden; }
+    .days button.today { box-shadow: inset 0 0 0 1.5px var(--p1); color: var(--p1); font-weight: 700; }
+    .days button.sel { box-shadow: inset 0 0 0 2px var(--ink); font-weight: 700; }
+    .days button.future { opacity: .3; }
+    .days button:disabled:not(.future) { visibility: hidden; }
+    .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin-top: 12px; font-size: 11px; font-weight: 500; color: var(--mute); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend i { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ---------------- Verlauf ---------------- */
+    .list { padding: 0; overflow: hidden; }
+    .list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; }
+    .entry + .entry { border-top: 1px solid var(--sep); }
+    .entry summary { list-style: none; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 16px; cursor: pointer; transition: background .15s; }
+    .entry summary::-webkit-details-marker { display: none; }
+    .entry summary:hover { background: color-mix(in srgb, var(--card) 70%, var(--hover)); }
+    .entry .pill { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums;
+      background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); }
+    .entry .txt { flex: 1; min-width: 0; }
+    .entry .date { display: block; font-size: 14px; font-weight: 600; color: var(--ink); }
+    .entry .snip { display: block; font-size: 13px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .entry .chev { width: 16px; height: 16px; color: var(--mute); transition: transform .2s; }
+    .entry[open] .chev { transform: rotate(90deg); }
+    .entry .body { padding: 2px 16px 14px 68px; display: grid; gap: 8px; font-size: 13px; }
+    .entry dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; }
+    .entry dt { color: var(--mute); }
+    .entry dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+    .entry .row-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+    .group-label { margin: 18px 4px 8px; font-size: 13px; font-weight: 600; color: var(--mute); }
+    .empty { padding: 32px 16px; text-align: center; font-size: 13px; color: var(--mute); }
+    .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .hist-head h2 { font-size: 22px; font-weight: 700; color: var(--ink); }
+
+    /* Knöpfe */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 16px; font-size: 14px; font-weight: 600; border: 0; border-radius: 999px;
+      background: var(--p1); color: var(--on-p1); transition: filter .15s; text-decoration: none; }
+    .btn:hover { filter: brightness(1.06); }
+    .btn:disabled { opacity: .5; }
+    .btn .ic { width: 16px; height: 16px; }
+    .btn.wide { width: 100%; min-height: 44px; border-radius: 12px; font-size: 15px; }
+    .btn.ghost { background: var(--well); color: var(--ink); }
+    .btn.small { min-height: 32px; padding: 5px 14px; font-size: 13px; }
+    .btn.red { background: var(--danger); color: #fff; }
+    .dark .btn.red { color: #3a0906; }
+
+    /* Anmeldung */
+    .gate { max-width: 380px; margin: 8vh auto 0; }
+    .gate h2 { font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+    .gate p.lead { margin: 0 0 16px; font-size: 13px; color: var(--mute); }
+    .gate label { display: grid; gap: 4px; font-size: 12px; font-weight: 500; color: var(--mute); margin-bottom: 12px; }
+    .gate input { width: 100%; padding: 10px 12px; font-size: 16px; border: 0; border-radius: 10px; background: var(--well); color: var(--ink); }
+    .gate input:focus { outline: 2px solid var(--p1); outline-offset: 0; }
+    .gate .links { display: grid; justify-items: center; gap: 6px; margin-top: 12px; font-size: 12px; color: var(--mute); text-align: center; }
+    .msg { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; background: var(--danger-soft); color: var(--danger); }
+    .msg.ok { background: var(--p1-soft); color: var(--p1); }
+
+    .spin { width: 18px; height: 18px; margin: 80px auto; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--mute); animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .fade-enter { animation: fade .3s ease both; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    /* ---------------- Größere Handys / kleine Tablets ---------------- */
+    @media (min-width: 480px) {
+      .scale { grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 4px; }
+      .scale button { font-size: 15px; min-height: 48px; }
+      .phases { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .phases button { flex-direction: column; justify-content: center; gap: 4px; text-align: center; font-size: 13px; min-height: 64px; }
+    }
+
+    /* ---------------- Desktop ab 1024 px: eigenes Layout ---------------- */
+    @media (min-width: 1024px) {
+      .wrap { max-width: 1200px; padding-inline: 32px; }
+      .bar { gap: 16px; padding-block: 14px 12px; }
+      .bar .logo { width: 40px; height: 40px; border-radius: 10px; }
+      .seg.nav-top { display: grid; width: 260px; margin-right: 8px; }
+      .nav-top button { min-height: 34px; }
+      .tabs { display: none; }
+      main { padding-top: 12px; }
+      .dash { gap: 20px; grid-template-columns: minmax(0, 45fr) minmax(0, 55fr);
+        grid-template-areas: "greet greet" "capture cal" "capture recent" "stats stats" "medhint medhint";
+        grid-template-rows: auto auto 1fr auto auto; align-items: start; }
+      .a-capture { align-self: stretch; }
+      .card { padding: 20px; }
+      .greet b { font-size: 26px; }
+      .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+      .stat { padding: 18px 20px; }
+      .stat b { font-size: 30px; }
+      .phases { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .days { gap: 6px; }
+      .days button { aspect-ratio: auto; min-height: 56px; font-size: 15px; }
+      .hist { max-width: 820px; margin: 0 auto; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } .spin { animation: spin 1.6s linear infinite !important; } }
+    @media (prefers-reduced-transparency: reduce) { header { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <script src="shared/ios-nav.js" defer></script>
+</head>
+
+<body x-data="migraLog()">
+
+<script>
+  const SUPABASE_URL      = 'https://syaonnedmidaipwjjmio.supabase.co';  // Projekt "core"
+  const SUPABASE_ANON_KEY = 'sb_publishable_a3tggKZJmotlFtIqKKdSYg_cNsazRkX';  // öffentlicher Publishable Key
+  const APP_ID            = 'migralog';                               // Eintrag in public.overall_apps
+  const ACCOUNT_URL       = '/konto.html?from=migralog#app-migralog';
+  const ADMIN_URL         = '/admin.html?from=migralog';
+  const AVATAR_COLORS     = ['#7a4a8f', '#4a7356', '#b25000', '#5856d6', '#0066cc', '#a2453a'];
+
+  // Linien-Symbole (gleiche Strichstärke wie DailyMind und Dashboard)
+  const svg = d => '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>';
+  const IC = {
+    aura:   svg('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><path d="M12 9.5v.01M9.5 12h.01M14.5 12h.01M12 14.5v.01"/>'),
+    attack: svg('<path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/>'),
+    fading: svg('<path d="M3 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3M3 14c3 0 3 2 6 2s3-2 6-2 3 2 6 2" opacity=".55"/><path d="M3 20h18"/>'),
+    free:   svg('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>'),
+  };
+  const PHASES = [
+    { id: 'aura',   label: 'Warnzeichen', long: 'Warnzeichen (Aura)' },
+    { id: 'attack', label: 'Aktiver Anfall', long: 'Aktiver Anfall' },
+    { id: 'fading', label: 'Abklingend', long: 'Abklingend' },
+    { id: 'free',   label: 'Schmerzfrei', long: 'Schmerzfrei' },
+  ];
+  const SYMPTOMS  = ['Lichtempfindlich', 'Lärmempfindlich', 'Übelkeit', 'Erbrechen', 'Schwindel', 'Sehstörungen', 'Geruchsempfindlich', 'Kribbeln', 'Erschöpfung'];
+  const TRIGGERS  = ['Stress', 'Schlafmangel', 'Wetter/Druck', 'Nahrungsmittel', 'Bildschirmzeit', 'Zu wenig getrunken', 'Mahlzeit ausgelassen', 'Alkohol', 'Koffein', 'Zyklus/Hormone', 'Gerüche', 'Sport'];
+  const LOCATIONS = ['Links', 'Rechts', 'Beidseitig', 'Stirn', 'Hinter dem Auge', 'Schläfe', 'Nacken'];
+  const MEDS      = ['Ibuprofen', 'Paracetamol', 'ASS', 'Triptan', 'Naproxen', 'Mittel gegen Übelkeit'];
+  const EFFECTS   = ['Keine Wirkung', 'Etwas besser', 'Gut geholfen'];
+  const IMPACTS   = ['Kaum', 'Eingeschränkt', 'Ging gar nicht'];
+  const PAIN_WORDS = ['schmerzfrei', 'leicht', 'leicht', 'leicht', 'mittel', 'mittel', 'mittel', 'stark', 'stark', 'sehr stark', 'unerträglich'];
+  // Ab so vielen Tagen mit Schmerzmitteln im Monat gibt es einen sanften Hinweis (Kopfschmerz durch Medikamentenübergebrauch)
+  const MED_DAYS_HINT = 10;
+</script>
+
+<!-- ================================================================ -->
+<!-- Kopfzeile                                                        -->
+<!-- ================================================================ -->
+<header>
+  <div class="wrap bar">
+    <img class="logo" src="icon.svg" alt="">
+    <div class="head">
+      <h1>Migräne Tracker</h1>
+      <div class="sub" x-text="view === 'app' ? longDate(today()) : 'Sanft im Blick, was dein Kopf braucht'"></div>
+    </div>
+
+    <!-- Desktop: Navigation im Kopf -->
+    <nav class="seg nav-top" aria-label="Bereich" x-show="view === 'app'" x-cloak>
+      <button @click="tab = 'dash'" :aria-pressed="tab === 'dash'" type="button">Dashboard</button>
+      <button @click="tab = 'hist'" :aria-pressed="tab === 'hist'" type="button">Verlauf</button>
+    </nav>
+
+    <div class="acts">
+      <button @click="toggleTheme()" class="icon-btn" type="button" :aria-label="dark ? 'Zum hellen Modus wechseln' : 'Zum dunklen Modus wechseln'" :title="dark ? 'Hell' : 'Dunkel'">
+        <svg x-show="!dark" class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+        <svg x-show="dark" x-cloak class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>
+      </button>
+
+      <!-- Profilmenü wie in den anderen Apps -->
+      <div class="me" x-show="view === 'app' || view === 'noaccess'" x-cloak @click.outside="menuOpen = false" @keydown.escape.window="if (menuOpen) { menuOpen = false; $refs.meBtn.focus(); }">
+        <button x-ref="meBtn" @click="menuOpen = !menuOpen" class="icon-btn" type="button" aria-label="Mein Konto" title="Mein Konto" aria-haspopup="menu" :aria-expanded="menuOpen" aria-controls="meMenu" style="overflow: visible">
+          <span style="position:absolute;inset:0;border-radius:50%;overflow:hidden;display:grid;place-items:center">
+            <template x-if="me.photo"><img :src="me.photo" alt=""></template>
+            <svg x-show="!me.photo" class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>
+          </span>
+          <span x-show="view === 'app'" class="sync-dot" :class="syncLevel()"></span>
+        </button>
+        <div id="meMenu" class="pm-menu" x-show="menuOpen" x-cloak x-transition.opacity.duration.150ms @click="if ($event.target.closest('.pm-item')) menuOpen = false" role="menu">
+          <div class="pm-head">
+            <span class="pm-ava" :style="'background:' + me.color">
+              <template x-if="me.photo"><img :src="me.photo" alt=""></template>
+              <span x-show="!me.photo" x-text="me.initials"></span>
+            </span>
+            <div>
+              <b x-text="me.name"></b>
+              <small x-text="user?.email"></small>
+              <span class="pm-role" x-show="me.role" x-text="roleLabel(me.role)"></span>
+            </div>
+          </div>
+          <div class="pm-sync" x-show="view === 'app'" role="status">
+            <i :class="syncLevel()"></i>
+            <span><b>Cloud-Sync</b> · <span x-text="syncText()"></span></span>
+          </div>
+          <a class="pm-item" href="/" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Dashboard</a>
+          <a class="pm-item" :href="ACCOUNT_URL" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Kontoeinstellungen</a>
+          <a class="pm-item" :href="ADMIN_URL" role="menuitem" x-show="me.role === 'admin'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin-Einstellungen<small>nur Admins</small></a>
+          <button class="pm-item" type="button" role="menuitem" x-show="view === 'app'" @click="exportCsv()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Kopfschmerzkalender exportieren<small>CSV</small></button>
+          <div class="pm-sep"></div>
+          <button class="pm-item danger" type="button" role="menuitem" @click="signOut()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>Abmelden</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section x-show="view === 'loading'" aria-label="Wird geladen"><div class="spin"></div></section>
+
+  <!-- Login (Konten legt nur ein Admin an) -->
+  <section x-show="view === 'auth'" x-cloak class="gate fade-enter">
+    <form @submit.prevent="submitAuth()" class="card">
+      <h2 x-text="{ login: 'Schön, dass du da bist.', reset: 'Passwort zurücksetzen', recover: 'Neues Passwort' }[authMode]"></h2>
+      <p class="lead" x-show="authMode !== 'recover'">Ein paar Fingertipps am Tag. Damit du Muster erkennst und beim nächsten Arzttermin alles beisammen hast.</p>
+      <p class="lead" x-show="authMode === 'recover'">Wähle ein neues Passwort mit mindestens 8 Zeichen.</p>
+      <label x-show="authMode !== 'recover'">E-Mail
+        <input type="email" x-model="form.email" :required="authMode !== 'recover'" autocomplete="email" placeholder="du@beispiel.de">
+      </label>
+      <label x-show="authMode !== 'reset'"><span x-text="authMode === 'recover' ? 'Neues Passwort' : 'Passwort'"></span>
+        <input type="password" x-model="form.password" :required="authMode !== 'reset'" minlength="8" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" placeholder="Mindestens 8 Zeichen">
+      </label>
+      <p x-show="auth.error" x-text="auth.error" class="msg" role="alert"></p>
+      <p x-show="auth.info" x-text="auth.info" class="msg ok"></p>
+      <button type="submit" :disabled="auth.busy" class="btn wide" x-text="auth.busy ? 'Einen Moment …' : { login: 'Anmelden', reset: 'Link senden', recover: 'Passwort speichern' }[authMode]"></button>
+      <div class="links">
+        <button x-show="authMode === 'login'" @click="switchAuth('reset')" type="button" class="link">Passwort vergessen?</button>
+        <button x-show="authMode === 'reset'" @click="switchAuth('login')" type="button" class="link">Zurück zur Anmeldung</button>
+        <span x-show="authMode === 'login'">Noch kein Konto? Zugänge vergibt dein Admin.</span>
+      </div>
+    </form>
+  </section>
+
+  <!-- Kein Zugriff -->
+  <section x-show="view === 'noaccess'" x-cloak class="gate fade-enter">
+    <div class="card">
+      <h2>Noch nicht freigeschaltet</h2>
+      <p class="lead">Dein Konto <b x-text="user?.email"></b> hat noch keinen Zugriff auf den Migräne Tracker. Sobald ein Admin dich freischaltet, kannst du hier direkt loslegen.</p>
+      <button @click="checkAccess()" type="button" class="btn ghost wide">Erneut prüfen</button>
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- App                                                            -->
+  <!-- ============================================================== -->
+  <main x-show="view === 'app'" x-cloak>
+
+    <!-- Handy: Bereiche wie in DailyMind -->
+    <nav class="seg tabs" aria-label="Bereich">
+      <button @click="tab = 'dash'" :aria-pressed="tab === 'dash'" type="button">Dashboard</button>
+      <button @click="tab = 'hist'" :aria-pressed="tab === 'hist'" type="button">Verlauf</button>
+    </nav>
+
+    <!-- ------------------------- Dashboard ------------------------- -->
+    <section x-show="tab === 'dash'" class="dash fade-enter">
+
+      <div class="greet a-greet">
+        <div>
+          <p class="eyebrow" x-text="weekday(today()) + ', ' + longDate(today())"></p>
+          <b x-text="greeting()"></b>
+          <span x-text="greetLine()"></span>
+        </div>
+      </div>
+
+      <!-- Tägliche Erfassung -->
+      <article class="card a-capture" aria-label="Tägliche Erfassung">
+        <div class="day">
+          <span class="badge-ic"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+          <div class="mid">
+            <p class="eyebrow" x-text="date === today() ? 'Tägliche Erfassung · Heute' : 'Tägliche Erfassung · ' + weekday(date)"></p>
+            <h3 x-text="date === today() ? 'Wie geht es deinem Kopf?' : longDate(date)"></h3>
+            <button x-show="date !== today()" x-cloak @click="goTo(today())" type="button" class="link">Zu heute</button>
+          </div>
+          <button @click="shiftDay(-1)" class="icon-btn" type="button" aria-label="Vorheriger Tag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+          <button @click="shiftDay(1)" :disabled="date >= today()" class="icon-btn" type="button" aria-label="Nächster Tag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        </div>
+
+        <!-- 1. Schmerzstärke -->
+        <div class="block" role="group" aria-labelledby="lblPain">
+          <p class="lbl" id="lblPain">Schmerzstärke
+            <small class="lv" :style="entry.pain !== null && 'color: var(--lv' + level(entry.pain) + ')'" x-text="entry.pain === null ? 'noch offen' : entry.pain + ' · ' + PAIN_WORDS[entry.pain]"></small></p>
+          <div class="scale">
+            <template x-for="n in 11" :key="n">
+              <button type="button" :style="'--c: var(--lv' + level(n - 1) + ')'" :aria-pressed="entry.pain === n - 1" :aria-label="'Schmerzstärke ' + (n - 1) + ', ' + PAIN_WORDS[n - 1]"
+                      @click="setPain(n - 1)" x-text="n - 1"></button>
+            </template>
+          </div>
+          <div class="scale-ends"><span>0 kein Schmerz</span><span>10 unerträglich</span></div>
+        </div>
+
+        <!-- 2. Phase -->
+        <div class="block" role="group" aria-labelledby="lblPhase">
+          <p class="lbl" id="lblPhase">Phase</p>
+          <div class="phases">
+            <template x-for="p in PHASES" :key="p.id">
+              <button type="button" :aria-pressed="entry.phase === p.id" @click="entry.phase = entry.phase === p.id ? null : p.id; queueSave()">
+                <span x-html="IC[p.id]" style="display:contents"></span><span x-text="p.label"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- 3. Begleitsymptome -->
+        <div class="block" role="group" aria-labelledby="lblSym">
+          <p class="lbl" id="lblSym">Begleitsymptome <small x-show="entry.symptoms.length" x-text="entry.symptoms.length + ' gewählt'"></small></p>
+          <div class="chips">
+            <template x-for="s in SYMPTOMS" :key="s">
+              <button type="button" class="chip" :aria-pressed="entry.symptoms.includes(s)" @click="toggle('symptoms', s)" x-text="s"></button>
+            </template>
+          </div>
+        </div>
+
+        <!-- 4. Auslöser -->
+        <div class="block" role="group" aria-labelledby="lblTrig">
+          <p class="lbl" id="lblTrig">Mögliche Auslöser <small x-show="entry.triggers.length" x-text="entry.triggers.length + ' gewählt'"></small></p>
+          <div class="chips">
+            <template x-for="s in triggerOptions()" :key="s">
+              <button type="button" class="chip" :aria-pressed="entry.triggers.includes(s)" @click="toggle('triggers', s)" x-text="s"></button>
+            </template>
+            <button type="button" class="chip add" x-show="!adding.triggers" @click="adding.triggers = true; $nextTick(() => $refs.trigIn.focus())">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Eigener
+            </button>
+          </div>
+          <form class="chip-input" x-show="adding.triggers" x-cloak @submit.prevent="addCustom('triggers', $refs.trigIn)">
+            <input x-ref="trigIn" type="text" maxlength="40" placeholder="z. B. Langes Autofahren" aria-label="Eigener Auslöser" @keydown.escape="adding.triggers = false">
+            <button type="submit" class="btn small">Hinzufügen</button>
+          </form>
+        </div>
+
+        <!-- 5. Medikation -->
+        <div class="block" role="group" aria-labelledby="lblMed">
+          <p class="lbl" id="lblMed">Medikation <small x-show="entry.meds.length" x-text="entry.meds.length + ' gewählt'"></small></p>
+          <div class="chips">
+            <template x-for="s in medOptions()" :key="s">
+              <button type="button" class="chip" :aria-pressed="entry.meds.includes(s)" @click="toggle('meds', s)" x-text="s"></button>
+            </template>
+            <button type="button" class="chip add" x-show="!adding.meds" @click="adding.meds = true; $nextTick(() => $refs.medIn.focus())">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Anderes
+            </button>
+          </div>
+          <form class="chip-input" x-show="adding.meds" x-cloak @submit.prevent="addCustom('meds', $refs.medIn)">
+            <input x-ref="medIn" type="text" maxlength="40" placeholder="z. B. Sumatriptan 50 mg" aria-label="Eigenes Medikament" @keydown.escape="adding.meds = false">
+            <button type="submit" class="btn small">Hinzufügen</button>
+          </form>
+          <div class="inline" x-show="entry.meds.length" x-cloak>
+            <label class="time">Eingenommen um
+              <input type="time" :value="entry.med_time || ''" @change="entry.med_time = $event.target.value || null; queueSave()">
+            </label>
+            <div class="seg choice" role="group" aria-label="Wirkung">
+              <template x-for="(t, i) in EFFECTS" :key="t">
+                <button type="button" :aria-pressed="entry.med_effect === i" @click="entry.med_effect = entry.med_effect === i ? null : i; queueSave()" x-text="t"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mehr Details: Beginn, Ort, Alltag -->
+        <details class="more" :open="detailsOpen" @toggle="detailsOpen = $el.open">
+          <summary>Mehr Details <small x-text="detailsSummary()"></small>
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></summary>
+          <div class="block" role="group" aria-labelledby="lblLoc">
+            <p class="lbl" id="lblLoc">Wo sitzt der Schmerz?</p>
+            <div class="chips">
+              <template x-for="s in LOCATIONS" :key="s">
+                <button type="button" class="chip" :aria-pressed="entry.locations.includes(s)" @click="toggle('locations', s)" x-text="s"></button>
+              </template>
+            </div>
+          </div>
+          <div class="block">
+            <p class="lbl">Beginn</p>
+            <label class="time">Ungefähr um
+              <input type="time" :value="entry.started_at || ''" @change="entry.started_at = $event.target.value || null; queueSave()">
+            </label>
+          </div>
+          <div class="block" role="group" aria-labelledby="lblImp">
+            <p class="lbl" id="lblImp">Wie sehr hat es deinen Alltag eingeschränkt?</p>
+            <div class="seg choice">
+              <template x-for="(t, i) in IMPACTS" :key="t">
+                <button type="button" :aria-pressed="entry.impact === i" @click="entry.impact = entry.impact === i ? null : i; queueSave()" x-text="t"></button>
+              </template>
+            </div>
+          </div>
+        </details>
+
+        <!-- 6. Notiz -->
+        <div class="block">
+          <p class="lbl"><label for="note">Notiz</label><small>optional</small></p>
+          <div class="area">
+            <textarea id="note" rows="2" maxlength="2000" x-model="entry.note" x-effect="entry.note; grow($el)" @input="queueSave()" class="field" placeholder="Was war heute anders? Was hat gutgetan?"></textarea>
+          </div>
+        </div>
+
+        <p class="status" :class="{ err: saveState === 'error', pending: saveState === 'offline' }" x-text="saveStatus()" aria-live="polite"></p>
+      </article>
+
+      <!-- Hinweis Medikamententage -->
+      <div class="card medhint a-medhint" x-show="medDaysThisMonth() >= MED_DAYS_HINT" x-cloak role="note">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16v.01"/></svg>
+        <p>Du hast diesen Monat an <b x-text="medDaysThisMonth() + ' Tagen'"></b> Schmerzmittel genommen. Ab etwa 10 Tagen im Monat kann das selbst Kopfschmerzen begünstigen. Sprich das gern bei deinem nächsten Arzttermin an. Der Export im Profilmenü hilft dabei.</p>
+      </div>
+
+      <!-- Statistik -->
+      <section class="stats a-stats" aria-label="Statistik">
+        <article class="card stat">
+          <p class="top"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Migränetage</span></p>
+          <b><span x-text="stats().days"></span> <small x-text="stats().days === 1 ? 'Tag' : 'Tage'"></small></b>
+          <p><span x-text="'Vormonat ' + stats().prevDays"></span><span x-show="stats().diff !== 0" :class="stats().diff > 0 ? 'up' : 'down'" x-text="' · ' + (stats().diff > 0 ? '+' : '−') + Math.abs(stats().diff)"></span></p>
+        </article>
+        <article class="card stat">
+          <p class="top"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18M6 18v-5M10 18V8M14 18v-7M18 18V5"/></svg><span>Ø Schmerzstärke</span></p>
+          <b><span x-text="stats().avg"></span> <small>/ 10</small></b>
+          <p x-text="stats().prevAvg === '–' ? 'diesen Monat' : 'Vormonat Ø ' + stats().prevAvg"></p>
+        </article>
+        <article class="card stat">
+          <p class="top"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/></svg><span>Häufigster Auslöser</span></p>
+          <b class="word" x-text="stats().topTrigger"></b>
+          <p x-text="stats().worst"></p>
+        </article>
+        <article class="card stat">
+          <p class="top"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg><span>Schmerzfrei in Folge</span></p>
+          <b><span x-text="stats().streak"></span> <small x-text="stats().streak === 1 ? 'Tag' : 'Tage'"></small></b>
+          <p x-text="'Rekord ' + stats().best + (stats().best === 1 ? ' Tag' : ' Tage')"></p>
+        </article>
+      </section>
+
+      <!-- Monatskalender -->
+      <article class="card a-cal" aria-label="Monatskalender">
+        <div class="cal-head">
+          <button @click="shiftMonth(-1)" class="icon-btn" type="button" aria-label="Vorheriger Monat"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+          <h3 x-text="monthLabel(calMonth)"></h3>
+          <button @click="shiftMonth(1)" :disabled="calMonth >= today().slice(0, 7)" class="icon-btn" type="button" aria-label="Nächster Monat"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        </div>
+        <div class="wk" aria-hidden="true"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+        <div class="days">
+          <template x-for="c in calendarCells()" :key="c.key">
+            <button type="button" :disabled="!c.iso || c.iso > today()" @click="goTo(c.iso)"
+                    :class="{ has: !!c.e, today: c.iso === today(), sel: c.iso === date && c.iso !== today(), future: c.iso && c.iso > today(), ['l' + c.lv]: !!c.e }"
+                    :style="c.e ? '--c: var(--lv' + c.lv + ')' : ''"
+                    :aria-label="c.iso ? longDate(c.iso) + (c.e ? ', ' + entryWord(c.e) : '') : ''">
+              <span x-text="c.day"></span><i class="dot"></i>
+            </button>
+          </template>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--lv0)"></i>Schmerzfrei</span>
+          <span><i style="background: var(--lv1)"></i>Leicht 1–3</span>
+          <span><i style="background: var(--lv2)"></i>Mittel 4–6</span>
+          <span><i style="background: var(--lv3)"></i>Stark 7–10</span>
+        </div>
+      </article>
+
+      <!-- Letzte Einträge -->
+      <article class="card list a-recent" aria-label="Letzte Einträge">
+        <div class="list-head">
+          <h3>Letzte Einträge</h3>
+          <button x-show="filled().length > 5" type="button" class="link" @click="tab = 'hist'; window.scrollTo({ top: 0 })">Alle anzeigen</button>
+        </div>
+        <p x-show="!filled().length" class="empty">Noch keine Einträge. Dein erster wartet oben in der Erfassung.</p>
+        <template x-for="e in filled().slice(0, 5)" :key="'r' + e.entry_date">
+          <details class="entry" :style="'--c: var(--lv' + level(e) + ')'">
+            <summary>
+              <span class="pill" x-text="e.pain ?? '–'" aria-hidden="true"></span>
+              <span class="txt"><span class="date" x-text="weekday(e.entry_date).slice(0, 2) + ', ' + shortDate(e.entry_date)"></span><span class="snip" x-text="snippet(e)"></span></span>
+              <svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </summary>
+            <div class="body">
+              <dl><template x-for="r in details(e)" :key="r[0]"><div style="display:contents"><dt x-text="r[0]"></dt><dd x-text="r[1]"></dd></div></template></dl>
+              <div class="row-acts"><button type="button" class="btn ghost small" @click="goTo(e.entry_date)">Bearbeiten</button></div>
+            </div>
+          </details>
+        </template>
+      </article>
+    </section>
+
+    <!-- --------------------------- Verlauf --------------------------- -->
+    <section x-show="tab === 'hist'" x-cloak class="hist fade-enter">
+      <div class="hist-head">
+        <h2>Verlauf</h2>
+        <button type="button" class="btn ghost small" @click="exportCsv()" :disabled="!filled().length">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Für den Arzttermin exportieren
+        </button>
+      </div>
+      <div x-show="loadingList" class="spin"></div>
+      <p x-show="!loadingList && !filled().length" class="empty">Noch keine Einträge.</p>
+      <template x-for="g in byMonth()" :key="g.key">
+        <div>
+          <p class="group-label" x-text="g.label + ' · ' + g.days + (g.days === 1 ? ' Migränetag' : ' Migränetage')"></p>
+          <div class="card list">
+            <template x-for="e in g.entries" :key="e.entry_date">
+              <details class="entry" :style="'--c: var(--lv' + level(e) + ')'">
+                <summary>
+                  <span class="pill" x-text="e.pain ?? '–'" aria-hidden="true"></span>
+                  <span class="txt"><span class="date" x-text="weekday(e.entry_date).slice(0, 2) + ', ' + shortDate(e.entry_date)"></span><span class="snip" x-text="snippet(e)"></span></span>
+                  <svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                </summary>
+                <div class="body">
+                  <dl><template x-for="r in details(e)" :key="r[0]"><div style="display:contents"><dt x-text="r[0]"></dt><dd x-text="r[1]"></dd></div></template></dl>
+                  <div class="row-acts" x-show="confirmDelete !== e.entry_date">
+                    <button type="button" class="btn ghost small" @click="goTo(e.entry_date)">Bearbeiten</button>
+                    <button type="button" class="btn ghost small" style="color: var(--danger)" @click="confirmDelete = e.entry_date">Löschen</button>
+                  </div>
+                  <div class="row-acts" x-show="confirmDelete === e.entry_date" x-cloak role="alertdialog" :aria-label="'Eintrag vom ' + shortDate(e.entry_date) + ' löschen?'">
+                    <span style="font-weight: 600; color: var(--ink)">Eintrag endgültig löschen?</span>
+                    <button type="button" class="btn ghost small" @click="confirmDelete = null">Abbrechen</button>
+                    <button type="button" class="btn red small" :disabled="deleting" @click="deleteEntry(e)" x-text="deleting ? 'Löscht …' : 'Löschen'"></button>
+                  </div>
+                </div>
+              </details>
+            </template>
+          </div>
+        </div>
+      </template>
+    </section>
+  </main>
+</div>
+
+<script>
+  // ================================================================
+  // Datum (immer lokale Zeit, nie UTC)
+  // ================================================================
+  const pad = n => String(n).padStart(2, '0');
+  const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const fromISO = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+  const fmt = (s, o) => new Intl.DateTimeFormat('de-DE', o).format(fromISO(s));
+  const addDays = (iso, n) => { const d = fromISO(iso); d.setDate(d.getDate() + n); return toISO(d); };
+  const monthOf = (iso, n = 0) => { const d = fromISO(iso.slice(0, 7) + '-01'); d.setMonth(d.getMonth() + n); return toISO(d).slice(0, 7); };
+  const isOffline = e => !navigator.onLine || /fetch|network|load failed/i.test(String(e?.message || e));
+
+  const emptyEntry = () => ({ pain: null, phase: null, started_at: null, locations: [], symptoms: [], triggers: [], meds: [], med_time: null, med_effect: null, impact: null, note: '' });
+  const FIELDS = Object.keys(emptyEntry());
+  const hhmm = t => t ? String(t).slice(0, 5) : null;
+  // Migränetag: Schmerz > 0 oder eine Anfallsphase
+  const isMigraine = e => (e.pain ?? 0) > 0 || ['aura', 'attack', 'fading'].includes(e.phase);
+  const hasData = e => e.pain !== null && e.pain !== undefined || !!e.phase || !!e.started_at || !!(e.note || '').trim() || ['locations', 'symptoms', 'triggers', 'meds'].some(k => (e[k] || []).length);
+
+  // Passwort gegen HaveIBeenPwned prüfen (nur die ersten 5 Zeichen des SHA-1 verlassen den Browser)
+  async function pwnedCount(password) {
+    try {
+      const hash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(password));
+      const hex = [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+      const res = await fetch('https://api.pwnedpasswords.com/range/' + hex.slice(0, 5), { signal: AbortSignal.timeout(5000) });
+      if (!res.ok) return 0;
+      const line = (await res.text()).split('\n').find(l => l.startsWith(hex.slice(5) + ':'));
+      return line ? parseInt(line.split(':')[1], 10) || 0 : 0;
+    } catch (e) { return 0; }
+  }
+
+  function migraLog() {
+    return {
+      sb: null,
+      view: 'loading',            // loading | config | auth | noaccess | app
+      dark: document.documentElement.classList.contains('dark'),
+      user: null,
+      ACCOUNT_URL, ADMIN_URL, IC, PHASES, SYMPTOMS, LOCATIONS, EFFECTS, IMPACTS, PAIN_WORDS, MED_DAYS_HINT,
+      menuOpen: false,
+      me: { name: '', initials: '', color: AVATAR_COLORS[0], photo: null, role: null },
+
+      authMode: 'login',
+      form: { email: '', password: '' },
+      auth: { busy: false, error: '', info: '' },
+
+      tab: 'dash',
+      date: toISO(new Date()),
+      entry: emptyEntry(),
+      entries: [],                // alle eigenen Einträge, neueste zuerst
+      loadingList: false,
+      saveState: 'idle',          // idle | pending | saving | saved | offline | error
+      saveTimer: null,
+      lastSync: null,
+      detailsOpen: false,
+      adding: { triggers: false, meds: false },
+      calMonth: toISO(new Date()).slice(0, 7),
+      confirmDelete: null,
+      deleting: false,
+      tick: 0,                    // ändert sich beim Tageswechsel, damit „heute“ neu berechnet wird
+
+      // ------------------------------------------------------------
+      // Start
+      // ------------------------------------------------------------
+      async init() {
+        this.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        this.sb.auth.onAuthStateChange((event, session) => {
+          if (event === 'PASSWORD_RECOVERY') { this.user = session?.user ?? null; this.switchAuth('recover'); this.view = 'auth'; return; }
+          if (event === 'SIGNED_OUT') { this.reset(); return; }
+          if (event === 'SIGNED_IN' && session && this.user?.id !== session.user.id) {
+            this.user = session.user;
+            setTimeout(() => this.checkAccess(), 0);
+          }
+        });
+
+        const { data: { session } } = await this.sb.auth.getSession();
+        if (session && this.authMode !== 'recover') { this.user = session.user; await this.checkAccess(); }
+        else if (this.authMode !== 'recover') this.view = 'auth';
+
+        window.addEventListener('storage', e => {
+          if (e.key !== 'overall-theme' || !e.newValue) return;
+          this.dark = e.newValue === 'dark';
+          document.documentElement.classList.toggle('dark', this.dark);
+        });
+        window.addEventListener('online', () => this.flushQueue());
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState !== 'visible' || this.view !== 'app') return;
+          this.tick++;
+          this.flushQueue();
+        });
+        window.addEventListener('beforeunload', () => { if (this.saveState === 'pending') this.save(); });
+      },
+
+      reset() {
+        this.user = null; this.menuOpen = false;
+        this.me = { name: '', initials: '', color: AVATAR_COLORS[0], photo: null, role: null };
+        this.entry = emptyEntry(); this.entries = []; this.tab = 'dash';
+        this.form.password = ''; this.switchAuth('login'); this.view = 'auth';
+      },
+
+      toggleTheme() {
+        this.dark = !this.dark;
+        document.documentElement.classList.toggle('dark', this.dark);
+        try { localStorage.setItem('overall-theme', this.dark ? 'dark' : 'light'); } catch (_) {}
+      },
+
+      roleLabel: r => ({ admin: 'Admin', member: 'Mitglied', guest: 'Gast' })[r] || r,
+
+      // Name, Profilbild und App-Rolle aus dem gemeinsamen Konto (gilt für alle Apps)
+      async loadMe() {
+        const fallback = this.user.email.split('@')[0];
+        const [{ data: p }, { data: role }] = await Promise.all([
+          this.sb.from('overall_profiles').select('display_name, avatar_path').eq('id', this.user.id).maybeSingle(),
+          this.sb.rpc('overall_app_role', { p_app: APP_ID }),
+        ]);
+        const name = p?.display_name || fallback;
+        let h = 0; for (const c of name) h = (h * 31 + c.codePointAt(0)) >>> 0;
+        let photo = null;
+        if (p?.avatar_path) {
+          const { data } = await this.sb.storage.from('avatars').createSignedUrl(p.avatar_path, 3600);
+          photo = data?.signedUrl || null;
+        }
+        this.me = {
+          name, photo, role: role || null,
+          initials: name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?',
+          color: AVATAR_COLORS[h % AVATAR_COLORS.length],
+        };
+        try { localStorage.setItem('migralog-me-' + this.user.id, JSON.stringify({ ...this.me, photo: null })); } catch (_) {}
+      },
+
+      async checkAccess() {
+        const key = 'migralog-access-' + this.user.id;
+        this.loadMe().catch(e => {
+          try { Object.assign(this.me, JSON.parse(localStorage.getItem('migralog-me-' + this.user.id)) || {}); } catch (_) {}
+          if (!isOffline(e)) console.error(e);
+        });
+        const { data, error } = await this.sb.rpc('migralog_is_member');
+        let ok = data === true;
+        // Offline: letzte bekannte Freischaltung verwenden, damit man auch ohne Netz eintragen kann
+        if (error) { if (isOffline(error)) { try { ok = localStorage.getItem(key) === '1'; } catch (_) {} } else console.error(error); }
+        else { try { localStorage.setItem(key, ok ? '1' : '0'); } catch (_) {} }
+        if (!ok) { this.view = 'noaccess'; return; }
+        this.view = 'app';
+        await this.loadEntries();
+        this.flushQueue();
+      },
+
+      // ------------------------------------------------------------
+      // Anmeldung
+      // ------------------------------------------------------------
+      switchAuth(mode) { this.authMode = mode; this.auth.error = ''; this.auth.info = ''; },
+      async submitAuth() {
+        this.auth.busy = true; this.auth.error = ''; this.auth.info = '';
+        try {
+          if (this.authMode === 'login') {
+            const { error } = await this.sb.auth.signInWithPassword({ email: this.form.email, password: this.form.password });
+            if (error) throw error;
+          } else if (this.authMode === 'reset') {
+            const { error } = await this.sb.auth.resetPasswordForEmail(this.form.email, { redirectTo: location.origin + location.pathname });
+            if (error) throw error;
+            this.auth.info = 'Wenn ein Konto existiert, ist der Link unterwegs.';
+          } else {
+            const leaks = await pwnedCount(this.form.password);
+            if (leaks) throw new Error(`Dieses Passwort ist aus Datenlecks bekannt (${leaks.toLocaleString('de-DE')}× gefunden). Bitte wähle ein anderes.`);
+            const { error } = await this.sb.auth.updateUser({ password: this.form.password });
+            if (error) throw error;
+            this.form.password = ''; this.switchAuth('login');
+            await this.checkAccess();
+          }
+        } catch (e) {
+          const m = e?.message || String(e);
+          this.auth.error = /invalid login credentials/i.test(m) ? 'E-Mail oder Passwort stimmen nicht.'
+            : /rate limit/i.test(m) ? 'Zu viele Versuche. Bitte warte einen Moment.'
+            : isOffline(e) ? 'Keine Verbindung. Bist du online?' : m;
+        } finally { this.auth.busy = false; }
+      },
+      async signOut() {
+        if (this.saveState === 'pending') await this.save();
+        await this.sb.auth.signOut();
+      },
+
+      // ------------------------------------------------------------
+      // Laden, Speichern, Offline-Warteschlange
+      // ------------------------------------------------------------
+      queueKey() { return 'migralog-queue-' + this.user.id; },
+      readQueue() { try { return JSON.parse(localStorage.getItem(this.queueKey())) || {}; } catch (_) { return {}; } },
+      writeQueue(q) { try { Object.keys(q).length ? localStorage.setItem(this.queueKey(), JSON.stringify(q)) : localStorage.removeItem(this.queueKey()); } catch (_) {} },
+
+      async loadEntries() {
+        this.loadingList = !this.entries.length;
+        const { data, error } = await this.sb.from('migralog_entries').select('*').order('entry_date', { ascending: false }).limit(1500);
+        this.loadingList = false;
+        if (error) { if (!isOffline(error)) console.error(error); this.saveState = isOffline(error) ? 'offline' : 'error'; }
+        else { this.entries = data || []; this.lastSync = new Date(); }
+        // Noch nicht gesendete Einträge darüberlegen
+        for (const row of Object.values(this.readQueue())) this.upsertLocal(row);
+        this.openDate(this.date);
+      },
+
+      openDate(iso) {
+        const e = this.entries.find(x => x.entry_date === iso) || {};
+        const n = emptyEntry();
+        for (const k of FIELDS) if (e[k] !== undefined && e[k] !== null) n[k] = Array.isArray(n[k]) ? [...e[k]] : e[k];
+        n.started_at = hhmm(n.started_at); n.med_time = hhmm(n.med_time); n.note = n.note || '';
+        this.entry = n;
+        this.adding = { triggers: false, meds: false };
+        this.detailsOpen = !!(n.locations.length || n.started_at || n.impact !== null);
+      },
+
+      queueSave() {
+        this.saveState = 'pending';
+        clearTimeout(this.saveTimer);
+        this.saveTimer = setTimeout(() => this.save(), 700);
+      },
+
+      buildRow() {
+        const e = this.entry;
+        return {
+          user_id: this.user.id, entry_date: this.date,
+          pain: e.pain, phase: e.phase, started_at: e.started_at || null,
+          locations: e.locations, symptoms: e.symptoms, triggers: e.triggers, meds: e.meds,
+          med_time: e.meds.length ? e.med_time || null : null, med_effect: e.meds.length ? e.med_effect : null,
+          impact: e.impact, note: e.note.trim() || null,
+        };
+      },
+
+      async save() {
+        clearTimeout(this.saveTimer);
+        const row = this.buildRow();
+        this.upsertLocal(row);
+        this.saveState = 'saving';
+        const ok = await this.send(row);
+        if (ok) { if (this.saveState === 'saving') this.saveState = 'saved'; }
+        else if (navigator.onLine === false || this.saveState === 'offline') {
+          const q = this.readQueue(); q[row.entry_date] = row; this.writeQueue(q);
+        }
+      },
+
+      async send(row) {
+        const { data, error } = await this.sb.from('migralog_entries').upsert(row, { onConflict: 'user_id,entry_date' }).select().single();
+        if (error) {
+          if (isOffline(error)) { this.saveState = 'offline'; const q = this.readQueue(); q[row.entry_date] = row; this.writeQueue(q); }
+          else { console.error(error); this.saveState = 'error'; }
+          return false;
+        }
+        this.upsertLocal(data);
+        const q = this.readQueue(); if (q[row.entry_date]) { delete q[row.entry_date]; this.writeQueue(q); }
+        this.lastSync = new Date();
+        return true;
+      },
+
+      async flushQueue() {
+        if (!this.user || this.view !== 'app') return;
+        const rows = Object.values(this.readQueue());
+        if (!rows.length) return;
+        let all = true;
+        for (const r of rows) if (!(await this.send(r))) { all = false; break; }
+        if (all && this.saveState === 'offline') this.saveState = 'saved';
+      },
+
+      upsertLocal(row) {
+        const i = this.entries.findIndex(a => a.entry_date === row.entry_date);
+        if (i >= 0) this.entries[i] = { ...this.entries[i], ...row };
+        else this.entries = [row, ...this.entries].sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+      },
+
+      async deleteEntry(e) {
+        this.deleting = true;
+        const q = this.readQueue(); delete q[e.entry_date]; this.writeQueue(q);
+        let ok = true;
+        if (e.id) {
+          const { data, error } = await this.sb.from('migralog_entries').delete().eq('id', e.id).eq('user_id', this.user.id).select('id');
+          ok = !error && data?.length;
+          if (!ok) console.error(error);
+        }
+        this.deleting = false;
+        if (!ok) { alert('Löschen hat nicht geklappt. Bitte versuch es noch einmal.'); return; }
+        this.confirmDelete = null;
+        this.entries = this.entries.filter(a => a.entry_date !== e.entry_date);
+        if (this.date === e.entry_date) { this.entry = emptyEntry(); this.saveState = 'idle'; }
+      },
+
+      syncLevel() {
+        if (this.saveState === 'error') return 'error';
+        if (this.saveState === 'offline' || Object.keys(this.readQueue()).length) return 'pending';
+        return '';
+      },
+      syncText() {
+        const n = Object.keys(this.readQueue()).length;
+        if (this.saveState === 'error') return 'Speichern fehlgeschlagen';
+        if (this.saveState === 'offline' || n) return `Offline · ${n || 1} ${n === 1 || !n ? 'Eintrag wartet' : 'Einträge warten'}`;
+        if (this.saveState === 'saving' || this.saveState === 'pending') return 'Speichert …';
+        return this.lastSync ? 'Verbunden · zuletzt ' + this.lastSync.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : 'Verbunden';
+      },
+      saveStatus() {
+        return { idle: '', pending: 'Änderungen …', saving: 'Speichert …', saved: 'Gespeichert',
+          offline: 'Offline gespeichert. Wird synchronisiert, sobald du wieder online bist.',
+          error: 'Speichern fehlgeschlagen. Bitte versuch es gleich noch einmal.' }[this.saveState];
+      },
+
+      // ------------------------------------------------------------
+      // Erfassung
+      // ------------------------------------------------------------
+      setPain(n) {
+        this.entry.pain = this.entry.pain === n ? null : n;
+        // kleine Hilfe: 0 ohne Phase → schmerzfrei; Schmerz bei „schmerzfrei“ → Phase offen lassen
+        if (this.entry.pain === 0 && !this.entry.phase) this.entry.phase = 'free';
+        else if (this.entry.pain > 0 && this.entry.phase === 'free') this.entry.phase = null;
+        this.queueSave();
+      },
+      toggle(k, v) {
+        const a = this.entry[k];
+        this.entry[k] = a.includes(v) ? a.filter(x => x !== v) : [...a, v];
+        this.queueSave();
+      },
+      addCustom(k, input) {
+        const v = input.value.trim().replace(/\s+/g, ' ');
+        input.value = '';
+        this.adding[k] = false;
+        if (v && !this.entry[k].includes(v)) { this.entry[k] = [...this.entry[k], v]; this.queueSave(); }
+      },
+      // Eigene Werte aus dem Verlauf als Chips anbieten (häufigste zuerst)
+      usedValues(k, base, max) {
+        const count = {};
+        for (const e of this.entries) for (const v of e[k] || []) if (!base.includes(v)) count[v] = (count[v] || 0) + 1;
+        const extra = Object.keys(count).sort((a, b) => count[b] - count[a]).slice(0, max);
+        return [...base, ...extra, ...this.entry[k].filter(v => !base.includes(v) && !extra.includes(v))];
+      },
+      triggerOptions() { return this.usedValues('triggers', TRIGGERS, 6); },
+      medOptions() { return this.usedValues('meds', MEDS, 6); },
+      detailsSummary() {
+        const e = this.entry, parts = [];
+        if (e.locations.length) parts.push(e.locations.join(', '));
+        if (e.started_at) parts.push('ab ' + e.started_at);
+        if (e.impact !== null) parts.push(IMPACTS[e.impact]);
+        return parts.join(' · ') || 'Ort, Beginn, Alltag';
+      },
+
+      async goTo(iso) {
+        if (this.saveState === 'pending') await this.save();
+        this.date = iso;
+        this.calMonth = iso.slice(0, 7);
+        this.tab = 'dash';
+        this.openDate(iso);
+        this.saveState = 'idle';
+        this.$nextTick(() => document.querySelector('.a-capture')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      },
+      shiftDay(n) { const iso = addDays(this.date, n); if (iso <= this.today()) this.goTo(iso); },
+      shiftMonth(n) { const m = monthOf(this.calMonth, n); if (m <= this.today().slice(0, 7)) this.calMonth = m; },
+
+      // ------------------------------------------------------------
+      // Auswertung
+      // ------------------------------------------------------------
+      today() { this.tick; return toISO(new Date()); },
+      filled() { return this.entries.filter(hasData); },
+      level(x) {
+        const e = typeof x === 'number' ? { pain: x } : x;
+        if (!isMigraine(e)) return 0;
+        const p = e.pain ?? 0;
+        return p >= 7 ? 3 : p >= 4 ? 2 : 1;
+      },
+      entryWord(e) { return isMigraine(e) ? (e.pain !== null && e.pain !== undefined ? 'Schmerz ' + e.pain + ' von 10' : PHASES.find(p => p.id === e.phase)?.long) : 'schmerzfrei'; },
+
+      stats() {
+        const m = this.today().slice(0, 7), prev = monthOf(m, -1);
+        const inMonth = k => this.entries.filter(e => e.entry_date.startsWith(k) && hasData(e));
+        const mig = k => inMonth(k).filter(isMigraine);
+        const avgOf = list => { const v = list.map(e => e.pain).filter(p => p > 0); return v.length ? (v.reduce((a, b) => a + b, 0) / v.length).toLocaleString('de-DE', { maximumFractionDigits: 1 }) : '–'; };
+        const cur = mig(m), before = mig(prev);
+
+        // Häufigster Auslöser der letzten 90 Tage
+        const since = addDays(this.today(), -90), count = {};
+        for (const e of this.entries) if (e.entry_date >= since && isMigraine(e)) for (const t of e.triggers || []) count[t] = (count[t] || 0) + 1;
+        const top = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+
+        // Stärkster Tag dieses Monats
+        const worst = cur.filter(e => e.pain > 0).sort((a, b) => b.pain - a.pain || b.entry_date.localeCompare(a.entry_date))[0];
+
+        // Schmerzfrei in Folge: Tage seit dem letzten Migränetag (Tage ohne Eintrag zählen als schmerzfrei)
+        const migDays = this.entries.filter(isMigraine).map(e => e.entry_date).sort();
+        const t = this.today();
+        const gap = (a, b) => Math.round((fromISO(b) - fromISO(a)) / 864e5);
+        let streak = 0, best = 0;
+        if (migDays.length) {
+          const last = migDays[migDays.length - 1];
+          streak = last >= t ? 0 : gap(last, t);
+          for (let i = 1; i < migDays.length; i++) best = Math.max(best, gap(migDays[i - 1], migDays[i]) - 1);
+          best = Math.max(best, streak);
+        } else {
+          const first = this.entries.length ? this.entries[this.entries.length - 1].entry_date : null;
+          streak = first ? gap(first, t) + 1 : 0; best = streak;
+        }
+        return {
+          days: cur.length, prevDays: before.length, diff: cur.length - before.length,
+          avg: avgOf(cur), prevAvg: avgOf(before),
+          topTrigger: top || 'Noch offen',
+          worst: worst ? 'Stärkster Tag: ' + fmt(worst.entry_date, { day: 'numeric', month: 'short' }) + ' (' + worst.pain + '/10)' : (top ? count[top] + '× in 90 Tagen' : 'Wähle Auslöser bei Anfällen'),
+          streak, best,
+        };
+      },
+      medDaysThisMonth() {
+        const m = this.today().slice(0, 7);
+        return this.entries.filter(e => e.entry_date.startsWith(m) && (e.meds || []).length).length;
+      },
+
+      greeting() {
+        const h = new Date().getHours(), first = (this.me.name || '').split(/\s+/)[0];
+        const g = h < 5 ? 'Gute Nacht' : h < 11 ? 'Guten Morgen' : h < 18 ? 'Hallo' : 'Guten Abend';
+        return first ? `${g}, ${first}.` : g + '.';
+      },
+      greetLine() {
+        const t = this.entries.find(e => e.entry_date === this.today());
+        if (t && isMigraine(t)) return 'Sei heute besonders sanft zu dir. Ruhe, Dunkelheit und Wasser dürfen jetzt Vorrang haben.';
+        const s = this.stats().streak;
+        if (s >= 7) return `Schon ${s} Tage ohne Migräne. Schön, dass es dir gut geht.`;
+        if (t) return 'Danke fürs Eintragen. Jeder Tag hilft, Muster zu erkennen.';
+        return 'Wie geht es deinem Kopf heute? Ein kurzer Eintrag reicht.';
+      },
+
+      calendarCells() {
+        const [y, m] = this.calMonth.split('-').map(Number);
+        const first = new Date(y, m - 1, 1), offset = (first.getDay() + 6) % 7, len = new Date(y, m, 0).getDate();
+        const map = Object.fromEntries(this.entries.filter(hasData).map(e => [e.entry_date, e]));
+        const cells = [];
+        for (let i = 0; i < offset; i++) cells.push({ key: 'x' + i });
+        for (let d = 1; d <= len; d++) {
+          const iso = `${this.calMonth}-${pad(d)}`, e = map[iso];
+          cells.push({ key: iso, iso, day: d, e, lv: e ? this.level(e) : 0 });
+        }
+        return cells;
+      },
+
+      byMonth() {
+        const groups = [];
+        for (const e of this.filled()) {
+          const key = e.entry_date.slice(0, 7);
+          let g = groups[groups.length - 1];
+          if (!g || g.key !== key) groups.push(g = { key, label: this.monthLabel(key), entries: [], days: 0 });
+          g.entries.push(e);
+          if (isMigraine(e)) g.days++;
+        }
+        return groups;
+      },
+      snippet(e) {
+        const ph = PHASES.find(p => p.id === e.phase)?.label;
+        return [ph, ...(e.symptoms || []).slice(0, 2), ...(e.meds || []).slice(0, 1)].filter(Boolean).join(' · ') || (e.note || '').trim() || (isMigraine(e) ? 'Migränetag' : 'Schmerzfrei');
+      },
+      details(e) {
+        const r = [];
+        if (e.pain !== null && e.pain !== undefined) r.push(['Schmerz', e.pain + ' von 10 · ' + PAIN_WORDS[e.pain]]);
+        if (e.phase) r.push(['Phase', PHASES.find(p => p.id === e.phase)?.long]);
+        if (e.started_at) r.push(['Beginn', hhmm(e.started_at) + ' Uhr']);
+        if ((e.locations || []).length) r.push(['Ort', e.locations.join(', ')]);
+        if ((e.symptoms || []).length) r.push(['Symptome', e.symptoms.join(', ')]);
+        if ((e.triggers || []).length) r.push(['Auslöser', e.triggers.join(', ')]);
+        if ((e.meds || []).length) r.push(['Medikation', e.meds.join(', ') + (e.med_time ? ' um ' + hhmm(e.med_time) : '') + (e.med_effect !== null && e.med_effect !== undefined ? ' · ' + EFFECTS[e.med_effect] : '')]);
+        if (e.impact !== null && e.impact !== undefined) r.push(['Alltag', IMPACTS[e.impact]]);
+        if ((e.note || '').trim()) r.push(['Notiz', e.note.trim()]);
+        return r;
+      },
+
+      // Kopfschmerzkalender als CSV (Excel-freundlich: Semikolon, UTF-8 mit BOM)
+      exportCsv() {
+        const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+        const head = ['Datum', 'Schmerz (0-10)', 'Phase', 'Beginn', 'Ort', 'Symptome', 'Auslöser', 'Medikation', 'Einnahme', 'Wirkung', 'Alltag', 'Notiz'];
+        const rows = [...this.filled()].reverse().map(e => [
+          fmt(e.entry_date, { day: '2-digit', month: '2-digit', year: 'numeric' }), e.pain, PHASES.find(p => p.id === e.phase)?.long, hhmm(e.started_at),
+          (e.locations || []).join(', '), (e.symptoms || []).join(', '), (e.triggers || []).join(', '), (e.meds || []).join(', '),
+          hhmm(e.med_time), EFFECTS[e.med_effect], IMPACTS[e.impact], e.note,
+        ].map(q).join(';'));
+        const blob = new Blob(['﻿' + [head.map(q).join(';'), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' });
+        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `Migraene-Tracker_${this.today()}.csv` });
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      },
+
+      longDate: iso => fmt(iso, { day: 'numeric', month: 'long', year: 'numeric' }),
+      shortDate: iso => fmt(iso, { day: 'numeric', month: 'long' }),
+      weekday: iso => fmt(iso, { weekday: 'long' }),
+      monthLabel: ym => fmt(ym + '-01', { month: 'long', year: 'numeric' }),
+    };
+  }
+
+  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+</script>
+</body>
+</html>
