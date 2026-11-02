@@ -15,16 +15,18 @@ mit wenigen Fingertipps erfassen. Gleiche Designsprache und gleicher Kontozugang
 
 ## Erfassung (ein Eintrag pro Tag)
 
-Schmerzstärke 0–10, Phase (Warnzeichen/Aura, aktiver Anfall, abklingend, schmerzfrei), Begleitsymptome,
-mögliche Auslöser (auch eigene), Medikation (auch eigene) mit Einnahmezeit und Wirkung, Notiz.
-Unter „Mehr Details“: Ort des Schmerzes, Beginn, Einschränkung im Alltag.
+Bereich „Heute“ mit Tageswechsel wie in DailyMind. Schmerzstärke 0–5, Phase (Warnzeichen/Aura, aktiver Anfall,
+abklingend, schmerzfrei), Begleitsymptome, mögliche Auslöser (auch eigene) und Ort als kompakte Auswahllisten,
+Medikation (auch eigene) mit Einnahmezeit und Wirkung, Beginn, Einschränkung im Alltag, Notiz.
 Gespeichert wird automatisch. Ohne Netz bleibt der Eintrag auf dem Gerät und wird nachgeschickt.
 
-## Auswertung
+## Auswertung (Bereich „Verlauf“)
 
-- Kalender mit Farbe je Tag: Salbei schmerzfrei, Bernstein 1–3, Orange 4–6, Himbeere 7–10.
-- Migränetage (Monat und Vormonat), Ø Schmerzstärke, häufigster Auslöser (90 Tage) und stärkster Tag,
-  schmerzfreie Tage in Folge (Tage ohne Eintrag zählen als schmerzfrei).
+- Zeitraum umschaltbar: Woche, Monat, Jahr, Gesamt (jeweils mit Vergleich zum Zeitraum davor).
+- Migränetage, Ø Schmerzstärke, häufigster Auslöser und stärkster Tag, schmerzfreie Tage in Folge
+  (Tage ohne Eintrag zählen als schmerzfrei), Einträge des Zeitraums zum Ausklappen.
+- Kalender mit Farbe je Tag: Salbei schmerzfrei, Bernstein 1–2, Orange 3, Himbeere 4–5.
+  Die Datenbank erlaubt weiter 0–10; ältere Werte über 5 zählen als stark.
 - Ab 10 Tagen mit Schmerzmitteln im Monat ein sanfter Hinweis (`MED_DAYS_HINT`).
 - Export als CSV für den Arzttermin (Profilmenü oder „Verlauf“).
 
@@ -39,5 +41,5 @@ Gespeichert wird automatisch. Ohne Netz bleibt der Eintrag auf dem Gerät und wi
 
 Wie DailyMind: Systemschrift, Überschriften in New York, weiße Karten auf `#f2f2f7`, dunkel `#1c1c1e` auf Schwarz.
 Akzent Pflaume `#7a4a8f` (dunkel `#cfa6e6`). Handy bis 1023 px einspaltig, ab 1024 px eigenes Layout
-(Erfassung links, Kalender und letzte Einträge rechts, vier Statistik-Karten darunter, max. 1200 px).
+(„Heute“ zentriert auf 720 px; „Verlauf“ mit vier Statistik-Karten, darunter Kalender und Einträge nebeneinander, max. 1200 px).
 Bei Änderungen die Cache-Version in `sw.js` hochzählen.
