@@ -1,8 +1,8 @@
 {
   "id": "migralog-app",
-  "name": "Migräne Tracker",
-  "short_name": "Migräne",
-  "description": "Migräne, Auslöser und Medikamente sanft im Blick behalten.",
+  "name": "KopfschmerzTracker",
+  "short_name": "Kopfschmerz",
+  "description": "Kopfschmerzen, Auslöser und Medikamente sanft im Blick behalten.",
   "lang": "de",
   "start_url": "./",
   "scope": "./",
