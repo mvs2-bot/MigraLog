@@ -1,6 +1,6 @@
-# Migräne Tracker (MigraLog)
+# KopfschmerzTracker (MigraLog)
 
-Single-File-PWA aus der mvs2-App-Familie: Migränetage, Schmerzstärke, Auslöser und Medikamente
+Single-File-PWA aus der mvs2-App-Familie: Kopfschmerztage, Schmerzstärke, Auslöser und Medikamente
 mit wenigen Fingertipps erfassen. Gleiche Designsprache und gleicher Kontozugang wie DailyMind.
 
 ## Dateien
@@ -15,15 +15,16 @@ mit wenigen Fingertipps erfassen. Gleiche Designsprache und gleicher Kontozugang
 
 ## Erfassung (ein Eintrag pro Tag)
 
-Bereich „Heute“ mit Tageswechsel wie in DailyMind. Schmerzstärke 0–5, Phase (Warnzeichen/Aura, aktiver Anfall,
-abklingend, schmerzfrei), Begleitsymptome, mögliche Auslöser (auch eigene) und Ort als kompakte Auswahllisten,
-Medikation (auch eigene) mit Einnahmezeit und Wirkung, Beginn, Einschränkung im Alltag, Notiz.
+Bereich „Heute“ mit Tageswechsel wie in DailyMind. Schmerzstärke 0–5, Kopfschmerzart (Migräne, Spannungskopfschmerzen,
+stechend, dumpf), Beginn, Begleitsymptome, mögliche Auslöser (auch eigene), Ort und Phase (Warnzeichen/Aura, aktiver Anfall,
+abklingend, schmerzfrei) als kompakte Auswahllisten, Medikation (Kaffee zuerst, auch eigene) mit Einnahmezeit und Wirkung,
+Einschränkung im Alltag, Notiz.
 Gespeichert wird automatisch. Ohne Netz bleibt der Eintrag auf dem Gerät und wird nachgeschickt.
 
 ## Auswertung (Bereich „Verlauf“)
 
 - Zeitraum umschaltbar: Woche, Monat, Jahr, Gesamt (jeweils mit Vergleich zum Zeitraum davor).
-- Migränetage, Ø Schmerzstärke, häufigster Auslöser und stärkster Tag, schmerzfreie Tage in Folge
+- Kopfschmerztage, Ø Schmerzstärke, häufigster Auslöser und stärkster Tag, schmerzfreie Tage in Folge
   (Tage ohne Eintrag zählen als schmerzfrei), Einträge des Zeitraums zum Ausklappen.
 - Kalender mit Farbe je Tag: Salbei schmerzfrei, Bernstein 1–2, Orange 3, Himbeere 4–5.
   Die Datenbank erlaubt weiter 0–10; ältere Werte über 5 zählen als stark.

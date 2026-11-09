@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Migräne Tracker</title>
-  <meta name="description" content="Migräne Tracker – Schmerz, Auslöser und Medikamente sanft im Blick behalten.">
+  <title>KopfschmerzTracker</title>
+  <meta name="description" content="KopfschmerzTracker – Schmerz, Auslöser und Medikamente sanft im Blick behalten.">
   <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
   <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -13,7 +13,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Migräne">
+  <meta name="apple-mobile-web-app-title" content="Kopfschmerz">
 
   <!-- Dark Mode vor dem ersten Rendern setzen, damit nichts aufblitzt -->
   <script>
@@ -26,7 +26,7 @@
   </script>
 
   <style>
-    /* Migräne Tracker – Designsprache von DailyMind und dem mvs2-Dashboard:
+    /* KopfschmerzTracker – Designsprache von DailyMind und dem mvs2-Dashboard:
        Systemschrift, Überschriften in New York, weiße Karten auf Grau, Linien-Symbole.
        Akzent Pflaume (lila ist die Farbe der Migräne-Aufklärung), Intensität von Salbei über Bernstein bis Himbeere. */
     :root {
@@ -361,11 +361,17 @@
   // Linien-Symbole (gleiche Strichstärke wie DailyMind und Dashboard)
   const svg = d => '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + d + '</svg>';
   const IC = {
-    aura:   svg('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><path d="M12 9.5v.01M9.5 12h.01M14.5 12h.01M12 14.5v.01"/>'),
-    attack: svg('<path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/>'),
-    fading: svg('<path d="M3 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3M3 14c3 0 3 2 6 2s3-2 6-2 3 2 6 2" opacity=".55"/><path d="M3 20h18"/>'),
-    free:   svg('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>'),
+    migraine: svg('<path d="M13 2.5 5 13.5h6l-1 8 8-11h-6z"/>'),
+    tension:  svg('<path d="M3.5 12h17"/><path d="m7 8-3.5 4L7 16M17 8l3.5 4-3.5 4"/>'),
+    stabbing: svg('<path d="M4 20 15.5 8.5"/><path d="M12 5h7v7"/>'),
+    dull:     svg('<path d="M3 7c3 0 3 3 6 3s3-3 6-3 3 3 6 3M3 14c3 0 3 2 6 2s3-2 6-2 3 2 6 2"/>'),
   };
+  const TYPES = [
+    { id: 'migraine', label: 'Migräne' },
+    { id: 'tension',  label: 'Spannungs\u00adkopfschmerzen' },
+    { id: 'stabbing', label: 'Stechender Schmerz' },
+    { id: 'dull',     label: 'Dumpfer Schmerz' },
+  ];
   const PHASES = [
     { id: 'aura',   label: 'Warnzeichen', long: 'Warnzeichen (Aura)' },
     { id: 'attack', label: 'Aktiver Anfall', long: 'Aktiver Anfall' },
@@ -375,7 +381,7 @@
   const SYMPTOMS  = ['Lichtempfindlich', 'Lärmempfindlich', 'Übelkeit', 'Erbrechen', 'Schwindel', 'Sehstörungen', 'Geruchsempfindlich', 'Kribbeln', 'Erschöpfung'];
   const TRIGGERS  = ['Stress', 'Schlafmangel', 'Wetter/Druck', 'Nahrungsmittel', 'Bildschirmzeit', 'Zu wenig getrunken', 'Mahlzeit ausgelassen', 'Koffein', 'Gerüche', 'Sport'];
   const LOCATIONS = ['Links', 'Rechts', 'Beidseitig', 'Stirn', 'Hinter dem Auge', 'Schläfe', 'Nacken'];
-  const MEDS      = ['Ibuprofen', 'Paracetamol', 'ASS', 'Triptan', 'Naproxen', 'Mittel gegen Übelkeit'];
+  const MEDS      = ['Kaffee', 'Ibuprofen', 'Paracetamol', 'ASS', 'Triptan', 'Naproxen', 'Mittel gegen Übelkeit'];
   const EFFECTS   = ['Keine Wirkung', 'Etwas besser', 'Gut geholfen'];
   const IMPACTS   = ['Kaum', 'Eingeschränkt', 'Ging gar nicht'];
   const PAIN_WORDS = ['schmerzfrei', 'leicht', 'spürbar', 'mittel', 'stark', 'sehr stark'];
@@ -397,7 +403,7 @@
   <div class="wrap bar">
     <img class="logo" src="icon.svg" alt="">
     <div class="head">
-      <h1>Migräne Tracker</h1>
+      <h1>KopfschmerzTracker</h1>
       <div class="sub" x-text="view === 'app' ? longDate(today()) : 'Sanft im Blick, was dein Kopf braucht'"></div>
     </div>
 
@@ -481,7 +487,7 @@
   <section x-show="view === 'noaccess'" x-cloak class="gate fade-enter">
     <div class="card">
       <h2>Noch nicht freigeschaltet</h2>
-      <p class="lead">Dein Konto <b x-text="user?.email"></b> hat noch keinen Zugriff auf den Migräne Tracker. Sobald ein Admin dich freischaltet, kannst du hier direkt loslegen.</p>
+      <p class="lead">Dein Konto <b x-text="user?.email"></b> hat noch keinen Zugriff auf den KopfschmerzTracker. Sobald ein Admin dich freischaltet, kannst du hier direkt loslegen.</p>
       <button @click="checkAccess()" type="button" class="btn ghost wide">Erneut prüfen</button>
     </div>
   </section>
@@ -525,19 +531,26 @@
           <div class="scale-ends"><span>0 kein Schmerz</span><span>5 sehr stark</span></div>
         </div>
 
-        <!-- 2. Phase -->
-        <div class="block" role="group" aria-labelledby="lblPhase">
-          <p class="lbl" id="lblPhase">Phase</p>
+        <!-- 2. Kopfschmerzart -->
+        <div class="block" role="group" aria-labelledby="lblType">
+          <p class="lbl" id="lblType">Kopfschmerzart</p>
           <div class="phases">
-            <template x-for="p in PHASES" :key="p.id">
-              <button type="button" :aria-pressed="entry.phase === p.id" @click="entry.phase = entry.phase === p.id ? null : p.id; queueSave()">
-                <span x-html="IC[p.id]" style="display:contents"></span><span x-text="p.label"></span>
+            <template x-for="t in TYPES" :key="t.id">
+              <button type="button" :aria-pressed="entry.headache_type === t.id" @click="entry.headache_type = entry.headache_type === t.id ? null : t.id; queueSave()">
+                <span x-html="IC[t.id]" style="display:contents"></span><span x-text="t.label"></span>
               </button>
             </template>
           </div>
         </div>
 
-        <!-- 3.–4. + Ort: kompakte Auswahllisten -->
+        <div class="block">
+          <p class="lbl">Beginn</p>
+          <label class="time">Ungefähr um
+            <input type="time" :value="entry.started_at || ''" @change="entry.started_at = $event.target.value || null; queueSave()">
+          </label>
+        </div>
+
+        <!-- 3.–4., Ort und Phase: kompakte Auswahllisten -->
         <div class="block picks">
           <template x-for="f in PICKERS" :key="f.key">
             <div class="pick" @click.outside="if (open === f.key) open = null" @keydown.escape="open = null">
@@ -561,6 +574,21 @@
               </div>
             </div>
           </template>
+          <!-- Phase: Einzelauswahl im selben Stil -->
+          <div class="pick" @click.outside="if (open === 'phase') open = null" @keydown.escape="open = null">
+            <button type="button" class="pick-row" :aria-expanded="open === 'phase'" @click="open = open === 'phase' ? null : 'phase'">
+              <span class="pick-lbl">Phase</span>
+              <span class="pick-val" :class="!entry.phase && 'none'" x-text="PHASES.find(p => p.id === entry.phase)?.long || 'Auswählen'"></span>
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div class="pick-pop" x-show="open === 'phase'" x-cloak x-transition.opacity.duration.120ms role="group" aria-label="Phase">
+              <template x-for="p in PHASES" :key="p.id">
+                <button type="button" class="pick-opt" :aria-pressed="entry.phase === p.id" @click="entry.phase = entry.phase === p.id ? null : p.id; open = null; queueSave()">
+                  <span class="box"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span x-text="p.long"></span>
+                </button>
+              </template>
+            </div>
+          </div>
         </div>
 
         <!-- 5. Medikation -->
@@ -590,13 +618,7 @@
           </div>
         </div>
 
-        <!-- Details: Beginn und Alltag -->
-        <div class="block">
-          <p class="lbl">Beginn</p>
-          <label class="time">Ungefähr um
-            <input type="time" :value="entry.started_at || ''" @change="entry.started_at = $event.target.value || null; queueSave()">
-          </label>
-        </div>
+        <!-- Alltag -->
         <div class="block" role="group" aria-labelledby="lblImp">
           <p class="lbl" id="lblImp">Wie sehr hat es deinen Alltag eingeschränkt?</p>
           <div class="seg choice">
@@ -633,7 +655,7 @@
       <!-- Statistik für den gewählten Zeitraum -->
       <section class="stats a-stats" aria-label="Statistik">
         <article class="card stat">
-          <p class="top"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Migränetage</span></p>
+          <p class="top"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>Kopfschmerztage</span></p>
           <b><span x-text="stats().days"></span> <small x-text="stats().days === 1 ? 'Tag' : 'Tage'"></small></b>
           <p><span x-text="stats().prevLabel"></span><span x-show="stats().diff" :class="stats().diff > 0 ? 'up' : 'down'" x-text="' · ' + (stats().diff > 0 ? '+' : '−') + Math.abs(stats().diff)"></span></p>
         </article>
@@ -699,7 +721,7 @@
           <p x-show="!inRange().length" class="empty" x-text="filled().length ? 'Keine Einträge in diesem Zeitraum.' : 'Noch keine Einträge. Dein erster wartet unter „Heute“.'"></p>
           <template x-for="g in byMonth()" :key="g.key">
             <div>
-              <p class="group-label" x-text="g.label + ' · ' + g.days + (g.days === 1 ? ' Migränetag' : ' Migränetage')"></p>
+              <p class="group-label" x-text="g.label + ' · ' + g.days + (g.days === 1 ? ' Kopfschmerztag' : ' Kopfschmerztage')"></p>
               <template x-for="e in g.entries" :key="e.entry_date">
                 <details class="entry" :style="'--c: var(--lv' + level(e) + ')'">
                   <summary>
@@ -741,12 +763,12 @@
   const monthOf = (iso, n = 0) => { const d = fromISO(iso.slice(0, 7) + '-01'); d.setMonth(d.getMonth() + n); return toISO(d).slice(0, 7); };
   const isOffline = e => !navigator.onLine || /fetch|network|load failed/i.test(String(e?.message || e));
 
-  const emptyEntry = () => ({ pain: null, phase: null, started_at: null, locations: [], symptoms: [], triggers: [], meds: [], med_time: null, med_effect: null, impact: null, note: '' });
+  const emptyEntry = () => ({ pain: null, headache_type: null, phase: null, started_at: null, locations: [], symptoms: [], triggers: [], meds: [], med_time: null, med_effect: null, impact: null, note: '' });
   const FIELDS = Object.keys(emptyEntry());
   const hhmm = t => t ? String(t).slice(0, 5) : null;
-  // Migränetag: Schmerz > 0 oder eine Anfallsphase
-  const isMigraine = e => (e.pain ?? 0) > 0 || ['aura', 'attack', 'fading'].includes(e.phase);
-  const hasData = e => e.pain !== null && e.pain !== undefined || !!e.phase || !!e.started_at || !!(e.note || '').trim() || ['locations', 'symptoms', 'triggers', 'meds'].some(k => (e[k] || []).length);
+  // Kopfschmerztag: Schmerz > 0, eine Kopfschmerzart oder eine Anfallsphase
+  const isMigraine = e => (e.pain ?? 0) > 0 || !!e.headache_type || ['aura', 'attack', 'fading'].includes(e.phase);
+  const hasData = e => e.pain !== null && e.pain !== undefined || !!e.headache_type || !!e.phase || !!e.started_at || !!(e.note || '').trim() || ['locations', 'symptoms', 'triggers', 'meds'].some(k => (e[k] || []).length);
 
   // Passwort gegen HaveIBeenPwned prüfen (nur die ersten 5 Zeichen des SHA-1 verlassen den Browser)
   async function pwnedCount(password) {
@@ -766,7 +788,7 @@
       view: 'loading',            // loading | config | auth | noaccess | app
       dark: document.documentElement.classList.contains('dark'),
       user: null,
-      ACCOUNT_URL, ADMIN_URL, IC, PHASES, PICKERS, RANGES, EFFECTS, IMPACTS, PAIN_WORDS, MED_DAYS_HINT,
+      ACCOUNT_URL, ADMIN_URL, IC, TYPES, PHASES, PICKERS, RANGES, EFFECTS, IMPACTS, PAIN_WORDS, MED_DAYS_HINT,
       menuOpen: false,
       me: { name: '', initials: '', color: AVATAR_COLORS[0], photo: null, role: null },
 
@@ -949,7 +971,7 @@
         const e = this.entry;
         return {
           user_id: this.user.id, entry_date: this.date,
-          pain: e.pain, phase: e.phase, started_at: e.started_at || null,
+          pain: e.pain, headache_type: e.headache_type, phase: e.phase, started_at: e.started_at || null,
           locations: e.locations, symptoms: e.symptoms, triggers: e.triggers, meds: e.meds,
           med_time: e.meds.length ? e.med_time || null : null, med_effect: e.meds.length ? e.med_effect : null,
           impact: e.impact, note: e.note.trim() || null,
@@ -1084,7 +1106,7 @@
         const p = e.pain ?? 0;
         return p >= 4 ? 3 : p >= 3 ? 2 : 1;   // Skala 0–5 (ältere Werte über 5 zählen als stark)
       },
-      entryWord(e) { return isMigraine(e) ? (e.pain !== null && e.pain !== undefined ? 'Schmerz ' + e.pain + ' von 5' : PHASES.find(p => p.id === e.phase)?.long) : 'schmerzfrei'; },
+      entryWord(e) { return isMigraine(e) ? (e.pain !== null && e.pain !== undefined ? 'Schmerz ' + e.pain + ' von 5' : TYPES.find(t => t.id === e.headache_type)?.label || PHASES.find(p => p.id === e.phase)?.long) : 'schmerzfrei'; },
 
       // Zeitraum [von, bis] als ISO-Datum; back = 1 für den Zeitraum davor. 'all' → null
       bounds(id, back = 0) {
@@ -1110,7 +1132,7 @@
         const top = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
         const worst = cur.filter(e => e.pain > 0).sort((a, b) => b.pain - a.pain || b.entry_date.localeCompare(a.entry_date))[0];
 
-        // Schmerzfrei in Folge: Tage seit dem letzten Migränetag (Tage ohne Eintrag zählen als schmerzfrei)
+        // Schmerzfrei in Folge: Tage seit dem letzten Kopfschmerztag (Tage ohne Eintrag zählen als schmerzfrei)
         const migDays = this.entries.filter(isMigraine).map(e => e.entry_date).sort();
         const t = this.today();
         const gap = (a, b) => Math.round((fromISO(b) - fromISO(a)) / 864e5);
@@ -1127,9 +1149,9 @@
           days: cur.length, diff: before ? cur.length - before.length : 0,
           prevLabel: before ? prevWord + ' ' + before.length : (first ? 'seit ' + fmt(first, { day: 'numeric', month: 'short', year: 'numeric' }) : 'insgesamt'),
           avg: avgOf(cur),
-          prevAvgLabel: before && avgOf(before) !== '–' ? prevWord + ' Ø ' + avgOf(before) : 'an Migränetagen',
+          prevAvgLabel: before && avgOf(before) !== '–' ? prevWord + ' Ø ' + avgOf(before) : 'an Kopfschmerztagen',
           topTrigger: top || (cur.length ? 'Noch offen' : '–'),
-          worst: worst ? 'Stärkster Tag: ' + fmt(worst.entry_date, { day: 'numeric', month: 'short' }) + ' (' + worst.pain + '/5)' : (cur.length ? 'Wähle Auslöser bei Anfällen' : 'Keine Migräne im Zeitraum'),
+          worst: worst ? 'Stärkster Tag: ' + fmt(worst.entry_date, { day: 'numeric', month: 'short' }) + ' (' + worst.pain + '/5)' : (cur.length ? 'Wähle Auslöser bei Anfällen' : 'Keine Kopfschmerzen im Zeitraum'),
           streak, best,
         };
       },
@@ -1163,12 +1185,13 @@
         return groups;
       },
       snippet(e) {
-        const ph = PHASES.find(p => p.id === e.phase)?.label;
-        return [ph, ...(e.symptoms || []).slice(0, 2), ...(e.meds || []).slice(0, 1)].filter(Boolean).join(' · ') || (e.note || '').trim() || (isMigraine(e) ? 'Migränetag' : 'Schmerzfrei');
+        const ty = TYPES.find(t => t.id === e.headache_type)?.label, ph = PHASES.find(p => p.id === e.phase)?.label;
+        return [ty, ph, ...(e.symptoms || []).slice(0, 2), ...(e.meds || []).slice(0, 1)].filter(Boolean).join(' · ') || (e.note || '').trim() || (isMigraine(e) ? 'Kopfschmerztag' : 'Schmerzfrei');
       },
       details(e) {
         const r = [];
         if (e.pain !== null && e.pain !== undefined) r.push(['Schmerz', e.pain + ' von 5 · ' + this.painWord(e.pain)]);
+        if (e.headache_type) r.push(['Art', TYPES.find(t => t.id === e.headache_type)?.label]);
         if (e.phase) r.push(['Phase', PHASES.find(p => p.id === e.phase)?.long]);
         if (e.started_at) r.push(['Beginn', hhmm(e.started_at) + ' Uhr']);
         if ((e.locations || []).length) r.push(['Ort', e.locations.join(', ')]);
@@ -1183,14 +1206,14 @@
       // Kopfschmerzkalender als CSV (Excel-freundlich: Semikolon, UTF-8 mit BOM)
       exportCsv() {
         const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-        const head = ['Datum', 'Schmerz (0-5)', 'Phase', 'Beginn', 'Ort', 'Symptome', 'Auslöser', 'Medikation', 'Einnahme', 'Wirkung', 'Alltag', 'Notiz'];
+        const head = ['Datum', 'Schmerz (0-5)', 'Kopfschmerzart', 'Phase', 'Beginn', 'Ort', 'Symptome', 'Auslöser', 'Medikation', 'Einnahme', 'Wirkung', 'Alltag', 'Notiz'];
         const rows = [...this.filled()].reverse().map(e => [
-          fmt(e.entry_date, { day: '2-digit', month: '2-digit', year: 'numeric' }), e.pain, PHASES.find(p => p.id === e.phase)?.long, hhmm(e.started_at),
+          fmt(e.entry_date, { day: '2-digit', month: '2-digit', year: 'numeric' }), e.pain, TYPES.find(t => t.id === e.headache_type)?.label, PHASES.find(p => p.id === e.phase)?.long, hhmm(e.started_at),
           (e.locations || []).join(', '), (e.symptoms || []).join(', '), (e.triggers || []).join(', '), (e.meds || []).join(', '),
           hhmm(e.med_time), EFFECTS[e.med_effect], IMPACTS[e.impact], e.note,
         ].map(q).join(';'));
         const blob = new Blob(['﻿' + [head.map(q).join(';'), ...rows].join('\r\n')], { type: 'text/csv;charset=utf-8' });
-        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `Migraene-Tracker_${this.today()}.csv` });
+        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `KopfschmerzTracker_${this.today()}.csv` });
         document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       },
