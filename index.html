@@ -354,6 +354,9 @@
     .msg { margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500; background: var(--danger-soft); color: var(--danger); }
     .msg.ok { background: var(--p1-soft); color: var(--p1); }
 
+    .load-gate { text-align: center; padding-top: 80px; }
+    .load-gate .spin { margin: 0 auto; }
+    .load-msg { margin: 14px 16px 16px; font-size: 13px; color: var(--mute); }
     .spin { width: 18px; height: 18px; margin: 80px auto; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--mute); animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .fade-enter { animation: fade .3s ease both; }
@@ -549,7 +552,12 @@
 
 <div class="wrap">
 
-  <section x-show="view === 'loading'" aria-label="Wird geladen"><div class="spin"></div></section>
+  <!-- Start: sichtbar, bis Anmeldung oder App bereit ist. Hängt es, gibt es nach 8 s „Neu laden“. -->
+  <section id="loadView" x-show="view === 'loading'" class="load-gate" aria-live="polite">
+    <div class="spin"></div>
+    <p id="loadMsg" class="load-msg" x-text="bootMsg">KopfschmerzTracker wird geladen …</p>
+    <button id="loadRetry" x-show="bootFail" x-cloak class="btn" type="button" onclick="location.reload()">Neu laden</button>
+  </section>
 
   <!-- Login (Konten legt nur ein Admin an) -->
   <section x-show="view === 'auth'" x-cloak class="gate fade-enter">
@@ -988,7 +996,9 @@
   const fmt = (s, o) => new Intl.DateTimeFormat('de-DE', o).format(fromISO(s));
   const addDays = (iso, n) => { const d = fromISO(iso); d.setDate(d.getDate() + n); return toISO(d); };
   const monthOf = (iso, n = 0) => { const d = fromISO(iso.slice(0, 7) + '-01'); d.setMonth(d.getMonth() + n); return toISO(d).slice(0, 7); };
-  const isOffline = e => !navigator.onLine || /fetch|network|load failed/i.test(String(e?.message || e));
+  const isOffline = e => !navigator.onLine || /fetch|network|load failed|timeout/i.test(String(e?.message || e));
+  // Netzanfragen nicht ewig warten lassen (z. B. schlechtes Netz oder App aus dem Hintergrund)
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, j) => setTimeout(() => j(new Error('timeout')), ms))]);
 
   const emptyEntry = () => ({ pain: null, headache_type: null, phase: null, started_at: null, locations: [], symptoms: [], triggers: [], meds: [], med_time: null, med_effect: null, impact: null, note: '' });
   const FIELDS = Object.keys(emptyEntry());
@@ -1024,6 +1034,9 @@
       auth: { busy: false, error: '', info: '' },
 
       tab: 'today',
+      bootMsg: 'KopfschmerzTracker wird geladen …',
+      bootFail: false,
+      booted: false,
       range: 'month',             // Zeitraum der Auswertung im Verlauf
       open: null,                 // offene Auswahlliste
       date: toISO(new Date()),
@@ -1045,6 +1058,11 @@
       // Start
       // ------------------------------------------------------------
       async init() {
+        window.migraReady = true;
+        // Start-Wächter: Ist nach 8 s weder Anmeldung noch App da, Sitzung selbst nachfragen, sonst „Neu laden“ anbieten
+        const bootTimer = setTimeout(() => this.bootWatch(), 8000);
+        this.$watch('view', v => { if (v !== 'loading') clearTimeout(bootTimer); });
+        if (!window.supabase) { clearTimeout(bootTimer); this.bootFailed(); return; }
         this.sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         this.sb.auth.onAuthStateChange((event, session) => {
@@ -1056,7 +1074,11 @@
           }
         });
 
-        const { data: { session } } = await this.sb.auth.getSession();
+        let session = null;
+        try { ({ data: { session } } = await withTimeout(this.sb.auth.getSession(), 10000)); }
+        catch (e) { this.bootFailed(); return; }
+        if (this.view !== 'loading' || this.booted) return;
+        this.booted = true;
         if (session && this.authMode !== 'recover') { this.user = session.user; await this.checkAccess(); }
         else if (this.authMode !== 'recover') this.view = 'auth';
 
@@ -1084,6 +1106,22 @@
         window.addEventListener('beforeunload', () => { if (this.saveState === 'pending') this.save(); });
       },
 
+      async bootWatch() {
+        if (this.view !== 'loading') return;
+        this.bootMsg = 'Das dauert gerade länger als sonst …';
+        try {
+          const { data } = await withTimeout(this.sb.auth.getSession(), 6000);
+          if (this.view !== 'loading' || this.booted) return;
+          this.booted = true;
+          if (data.session) { this.user = data.session.user; await this.checkAccess(); } else this.view = 'auth';
+        } catch (e) { this.bootFailed(); }
+      },
+      bootFailed() {
+        if (this.view !== 'loading') return;
+        this.bootMsg = 'Der KopfschmerzTracker startet gerade nicht. Bitte neu laden.';
+        this.bootFail = true;
+      },
+
       reset() {
         this.user = null; this.menuOpen = false;
         this.me = { name: '', initials: '', color: AVATAR_COLORS[0], photo: null, role: null };
@@ -1102,10 +1140,10 @@
       // Name, Profilbild und App-Rolle aus dem gemeinsamen Konto (gilt für alle Apps)
       async loadMe() {
         const fallback = this.user.email.split('@')[0];
-        const [{ data: p }, { data: role }] = await Promise.all([
+        const [{ data: p }, { data: role }] = await withTimeout(Promise.all([
           this.sb.from('overall_profiles').select('display_name, avatar_path').eq('id', this.user.id).maybeSingle(),
           this.sb.rpc('overall_app_role', { p_app: APP_ID }),
-        ]);
+        ]), 10000);
         const name = p?.display_name || fallback;
         let h = 0; for (const c of name) h = (h * 31 + c.codePointAt(0)) >>> 0;
         let photo = null;
@@ -1127,10 +1165,14 @@
           try { Object.assign(this.me, JSON.parse(localStorage.getItem('migralog-me-' + this.user.id)) || {}); } catch (_) {}
           if (!isOffline(e)) console.error(e);
         });
-        const { data, error } = await this.sb.rpc('migralog_is_member');
+        let data, error;
+        try { ({ data, error } = await withTimeout(this.sb.rpc('migralog_is_member'), 10000)); } catch (e) { error = e; }
         let ok = data === true;
         // Offline: letzte bekannte Freischaltung verwenden, damit man auch ohne Netz eintragen kann
-        if (error) { if (isOffline(error)) { try { ok = localStorage.getItem(key) === '1'; } catch (_) {} } else console.error(error); }
+        let known = !error;
+        if (error) { if (isOffline(error)) { try { const c = localStorage.getItem(key); known = c !== null; ok = c === '1'; } catch (_) {} } else console.error(error); }
+        // Ohne Netz und ohne gemerkte Freischaltung: nicht „nicht freigeschaltet“ zeigen, sondern „Keine Verbindung“
+        if (!known && isOffline(error) && this.view === 'loading') { this.bootMsg = 'Keine Verbindung zum Server. Bitte neu laden.'; this.bootFail = true; return; }
         else { try { localStorage.setItem(key, ok ? '1' : '0'); } catch (_) {} }
         if (!ok) { this.view = 'noaccess'; return; }
         this.view = 'app';
@@ -1181,7 +1223,8 @@
 
       async loadEntries() {
         this.loadingList = !this.entries.length;
-        const { data, error } = await this.sb.from('migralog_entries').select('*').order('entry_date', { ascending: false }).limit(1500);
+        let data, error;
+        try { ({ data, error } = await withTimeout(this.sb.from('migralog_entries').select('*').order('entry_date', { ascending: false }).limit(1500), 12000)); } catch (e) { error = e; }
         this.loadingList = false;
         if (error) { if (!isOffline(error)) console.error(error); this.saveState = isOffline(error) ? 'offline' : 'error'; }
         else { this.entries = data || []; this.lastSync = new Date(); }
@@ -1476,6 +1519,13 @@
     };
   }
 
+  // Falls die App gar nicht startet (z. B. Alpine oder supabase-js nicht geladen): nach 8 s „Neu laden“ anbieten
+  setTimeout(() => {
+    const l = document.getElementById('loadView');
+    if (window.migraReady || !l || getComputedStyle(l).display === 'none') return;
+    document.getElementById('loadMsg').textContent = 'Der KopfschmerzTracker startet gerade nicht. Bitte neu laden.';
+    const b = document.getElementById('loadRetry'); b.removeAttribute('x-cloak'); b.style.display = '';
+  }, 8000);
   if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 </script>
 </body>
