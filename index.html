@@ -284,6 +284,53 @@
     .hist-head h2 { font-size: 22px; font-weight: 700; color: var(--ink); }
     .list .group-label { margin: 14px 16px 2px; }
 
+    /* ---------------- Desktop-Ergänzungen (nur ab 1024 px sichtbar) ---------------- */
+    .today-side, .a-insight, .peek, .peek-bg { display: none; }
+    .mini .cal-head .icon-btn { width: 32px; height: 32px; }
+    .mini .cal-head h3 { font-size: 15px; }
+    .mini .wk { margin-top: 8px; }
+    .mini .days { gap: 2px; }
+    .mini .days button { min-height: 0; aspect-ratio: 1; border-radius: 9px; font-size: 13px; gap: 2px; }
+    .mini .days button .dot { width: 4px; height: 4px; }
+    .mini-list { padding: 0; overflow: hidden; }
+    .mini-list h3 { padding: 14px 16px 6px; font-size: 15px; }
+    .mini-list button { display: flex; width: 100%; align-items: center; gap: 10px; padding: 8px 16px; border: 0; background: none; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+    .mini-list button + button { border-top: 1px solid var(--sep); }
+    .mini-list button:hover { background: color-mix(in srgb, var(--card) 70%, var(--hover)); }
+    .mini-list .pill, .peek .pill { flex: none; width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
+      background: color-mix(in srgb, var(--c) 20%, transparent); color: var(--c); }
+    .mini-list .txt { flex: 1; min-width: 0; }
+    .mini-list .date { display: block; font-size: 13px; font-weight: 600; color: var(--ink); }
+    .mini-list .snip { display: block; font-size: 12px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-list .empty { padding: 12px 16px 18px; }
+    .a-insight h3 { margin-bottom: 12px; }
+    .bars { display: grid; gap: 8px; }
+    .bars div { display: grid; grid-template-columns: 110px minmax(0, 1fr) 24px; align-items: center; gap: 10px; font-size: 13px; color: var(--text); }
+    .bars span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bars i { display: block; height: 8px; border-radius: 99px; background: var(--p1); min-width: 4px; }
+    .bars b { font-weight: 600; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+    .ins-sub { margin: 18px 0 8px; font-size: 13px; font-weight: 600; color: var(--ink); display: flex; justify-content: space-between; }
+    .ins-sub small { font-weight: 500; color: var(--mute); }
+    .meter { position: relative; height: 10px; border-radius: 99px; background: var(--well); }
+    .meter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: var(--lv1); }
+    .meter i.over { background: var(--lv3); }
+    .meter u { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 2px; background: var(--ink); opacity: .55; }
+    .meter-legend { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--mute); }
+    .peek-bg { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .18); }
+    .peek { position: fixed; z-index: 51; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw; overflow-y: auto; background: var(--card); box-shadow: var(--pop); padding: 20px 24px 28px; }
+    .peek-head { display: flex; align-items: center; gap: 8px; }
+    .peek-head .mid { flex: 1; min-width: 0; text-align: center; }
+    .peek-head h2 { font-size: 20px; font-weight: 700; color: var(--ink); }
+    .peek-head .icon-btn { background: var(--well); box-shadow: none; }
+    .peek-sum { display: flex; align-items: center; gap: 12px; margin: 20px 0 14px; padding: 12px; border-radius: var(--radius-s); background: var(--well); }
+    .peek-sum .pill { width: 40px; height: 40px; font-size: 16px; }
+    .peek-sum b { display: block; font-size: 15px; color: var(--ink); }
+    .peek-sum small { font-size: 12px; color: var(--mute); }
+    .peek dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 14px; font-size: 14px; }
+    .peek dt { color: var(--mute); } .peek dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+    .peek .row-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 22px; }
+    .peek .close { margin-left: 4px; }
+
     /* Knöpfe */
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 16px; font-size: 14px; font-weight: 600; border: 0; border-radius: 999px;
       background: var(--p1); color: var(--on-p1); transition: filter .15s; text-decoration: none; }
@@ -327,9 +374,12 @@
       .nav-top button { min-height: 34px; }
       .tabs { display: none; }
       main { padding-top: 12px; }
-      .today-view { max-width: 720px; margin: 0 auto; }
+      .today-view { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+      .today-side { display: grid; gap: 14px; position: sticky; top: 84px; padding-top: 43px; }
+      .a-insight { display: block; grid-area: insight; }
+      .peek-bg, .peek { display: block; }
       .dash { gap: 20px; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
-        grid-template-areas: "head head" "stats stats" "medhint medhint" "cal recent"; align-items: start; }
+        grid-template-areas: "head head" "stats stats" "medhint medhint" "cal recent" "cal insight"; grid-template-rows: auto auto auto auto 1fr; align-items: start; }
       .card { padding: 20px; }
       .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
       .stat { padding: 18px 20px; }
@@ -542,6 +592,7 @@
 
     <!-- --------------------------- Heute --------------------------- -->
     <section x-show="tab === 'today'" class="today-view fade-enter">
+      <div class="today-main">
 
       <!-- Datum wie in DailyMind -->
       <div class="day">
@@ -675,6 +726,39 @@
 
         <p class="status" :class="{ err: saveState === 'error', pending: saveState === 'offline' }" x-text="saveStatus()" aria-live="polite"></p>
       </article>
+      </div>
+
+      <!-- Desktop: Monat und letzte Einträge neben dem Formular -->
+      <aside class="today-side" aria-label="Monat und letzte Einträge">
+        <article class="card mini" aria-label="Monatskalender">
+          <div class="cal-head">
+            <button @click="shiftMonth(-1)" class="icon-btn" type="button" aria-label="Vorheriger Monat"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+            <h3 x-text="monthLabel(calMonth)"></h3>
+            <button @click="shiftMonth(1)" :disabled="calMonth >= today().slice(0, 7)" class="icon-btn" type="button" aria-label="Nächster Monat"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+          </div>
+          <div class="wk" aria-hidden="true"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+          <div class="days">
+            <template x-for="c in calendarCells()" :key="c.key">
+              <button type="button" :disabled="!c.iso || c.iso > today()" @click="goTo(c.iso)"
+                      :class="{ has: !!c.e, today: c.iso === today(), sel: c.iso === date && date !== today(), future: c.iso && c.iso > today(), ['l' + c.lv]: !!c.e }"
+                      :style="c.e ? '--c: var(--lv' + c.lv + ')' : ''"
+                      :aria-label="c.iso ? longDate(c.iso) + (c.e ? ', ' + entryWord(c.e) : '') : ''">
+                <span x-text="c.day"></span><i class="dot"></i>
+              </button>
+            </template>
+          </div>
+        </article>
+        <article class="card mini-list" aria-label="Letzte Einträge">
+          <h3>Letzte Einträge</h3>
+          <template x-for="e in filled().slice(0, 5)" :key="e.entry_date">
+            <button type="button" @click="goTo(e.entry_date)" :style="'--c: var(--lv' + level(e) + ')'">
+              <span class="pill" x-text="e.pain ?? '–'" aria-hidden="true"></span>
+              <span class="txt"><span class="date" x-text="weekday(e.entry_date).slice(0, 2) + ', ' + shortDate(e.entry_date)"></span><span class="snip" x-text="snippet(e)"></span></span>
+            </button>
+          </template>
+          <p x-show="!filled().length" class="empty">Noch keine Einträge.</p>
+        </article>
+      </aside>
     </section>
 
     <!-- --------------------------- Verlauf --------------------------- -->
@@ -729,8 +813,8 @@
         <div class="wk" aria-hidden="true"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
         <div class="days">
           <template x-for="c in calendarCells()" :key="c.key">
-            <button type="button" :disabled="!c.iso || c.iso > today()" @click="goTo(c.iso)"
-                    :class="{ has: !!c.e, today: c.iso === today(), future: c.iso && c.iso > today(), ['l' + c.lv]: !!c.e }"
+            <button type="button" :disabled="!c.iso || c.iso > today()" @click="desk ? openPeek(c.iso) : goTo(c.iso)"
+                    :class="{ has: !!c.e, today: c.iso === today(), sel: desk && c.iso === peek, future: c.iso && c.iso > today(), ['l' + c.lv]: !!c.e }"
                     :style="c.e ? '--c: var(--lv' + c.lv + ')' : ''"
                     :aria-label="c.iso ? longDate(c.iso) + (c.e ? ', ' + entryWord(c.e) : '') : ''">
               <span x-text="c.day"></span><i class="dot"></i>
@@ -761,7 +845,7 @@
               <p class="group-label" x-text="g.label + ' · ' + g.days + (g.days === 1 ? ' Kopfschmerztag' : ' Kopfschmerztage')"></p>
               <template x-for="e in g.entries" :key="e.entry_date">
                 <details class="entry" :style="'--c: var(--lv' + level(e) + ')'">
-                  <summary>
+                  <summary @click="if (desk) { $event.preventDefault(); openPeek(e.entry_date); }">
                     <span class="pill" x-text="e.pain ?? '–'" aria-hidden="true"></span>
                     <span class="txt"><span class="date" x-text="weekday(e.entry_date).slice(0, 2) + ', ' + shortDate(e.entry_date)"></span><span class="snip" x-text="snippet(e)"></span></span>
                     <svg class="ic chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
@@ -784,6 +868,23 @@
           </template>
         </article>
       </div>
+
+      <!-- Desktop: Auslöser und Medikamente -->
+      <article class="card a-insight" aria-label="Auslöser und Medikamente">
+        <h3>Auslöser und Medikamente</h3>
+        <div class="bars">
+          <template x-for="t in topTriggers()" :key="t.name">
+            <div><span x-text="t.name"></span><i :style="'width:' + t.pct + '%'"></i><b x-text="t.n"></b></div>
+          </template>
+        </div>
+        <p x-show="!topTriggers().length" class="empty" style="padding: 8px 0">Im Zeitraum noch keine Auslöser erfasst.</p>
+        <p class="ins-sub">Tage mit Schmerzmitteln <small x-text="monthLabel(today().slice(0, 7))"></small></p>
+        <div class="meter" role="img" :aria-label="medDaysThisMonth() + ' von höchstens 10 Tagen'">
+          <i :class="medDaysThisMonth() >= MED_DAYS_HINT && 'over'" :style="'width:' + Math.min(100, medDaysThisMonth() / 15 * 100) + '%'"></i>
+          <u :style="'left:' + (MED_DAYS_HINT / 15 * 100) + '%'"></u>
+        </div>
+        <div class="meter-legend"><span x-text="medDaysThisMonth() + (medDaysThisMonth() === 1 ? ' Tag' : ' Tage')"></span><span>Grenze 10 Tage</span></div>
+      </article>
     </section>
 
     <!-- ---------------- Profil (nur Handy): Kontomenü als Seite ---------------- -->
@@ -821,6 +922,49 @@
     </section>
   </main>
 </div>
+
+<!-- Desktop: Eintrag aus dem Verlauf als Seitenfeld -->
+<template x-if="desk && peek && tab === 'hist'">
+  <div>
+    <div class="peek-bg" x-transition.opacity @click="closePeek()"></div>
+    <aside class="peek" role="dialog" aria-modal="true" :aria-label="'Eintrag vom ' + longDate(peek)" @keydown.escape.window="closePeek()"
+           x-data="{ get e() { return entries.find(a => a.entry_date === peek && hasDataOf(a)) } }">
+      <div class="peek-head">
+        <button @click="openPeek(addDaysOf(peek, -1))" class="icon-btn" type="button" aria-label="Vorheriger Tag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+        <div class="mid">
+          <p class="eyebrow" x-text="peek === today() ? 'Heute' : weekday(peek)"></p>
+          <h2 x-text="longDate(peek)"></h2>
+        </div>
+        <button @click="openPeek(addDaysOf(peek, 1))" :disabled="peek >= today()" class="icon-btn" type="button" aria-label="Nächster Tag"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <button @click="closePeek()" class="icon-btn close" type="button" aria-label="Schließen" x-init="$nextTick(() => $el.focus())"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+      <template x-if="e">
+        <div>
+          <div class="peek-sum" :style="'--c: var(--lv' + level(e) + ')'">
+            <span class="pill" x-text="e.pain ?? '–'" aria-hidden="true"></span>
+            <div><b x-text="entryWord(e)"></b><small x-text="snippet(e)"></small></div>
+          </div>
+          <dl><template x-for="r in details(e)" :key="r[0]"><div style="display:contents"><dt x-text="r[0]"></dt><dd x-text="r[1]"></dd></div></template></dl>
+          <div class="row-acts" x-show="confirmDelete !== e.entry_date">
+            <button type="button" class="btn" @click="goTo(peek); closePeek()">Bearbeiten</button>
+            <button type="button" class="btn ghost" style="color: var(--danger)" @click="confirmDelete = e.entry_date">Löschen</button>
+          </div>
+          <div class="row-acts" x-show="confirmDelete === e.entry_date" x-cloak role="alertdialog" aria-label="Eintrag löschen?">
+            <span style="font-weight: 600; color: var(--ink)">Eintrag endgültig löschen?</span>
+            <button type="button" class="btn ghost small" @click="confirmDelete = null">Abbrechen</button>
+            <button type="button" class="btn red small" :disabled="deleting" @click="deleteEntry(e)" x-text="deleting ? 'Löscht …' : 'Löschen'"></button>
+          </div>
+        </div>
+      </template>
+      <template x-if="!e">
+        <div>
+          <p class="empty">An diesem Tag gibt es keinen Eintrag.</p>
+          <div class="row-acts" style="justify-content: center"><button type="button" class="btn" @click="goTo(peek); closePeek()">Eintragen</button></div>
+        </div>
+      </template>
+    </aside>
+  </div>
+</template>
 
 <!-- Untere Tab-Leiste (nur Handy, siehe CSS) -->
 <nav class="tabbar" aria-label="Navigation" x-show="view === 'app'" x-cloak>
@@ -888,6 +1032,8 @@
       adding: { meds: false },
       calMonth: toISO(new Date()).slice(0, 7),
       confirmDelete: null,
+      desk: false,                // Desktop-Layout ab 1024 px
+      peek: null,                 // Datum im Seitenfeld des Verlaufs (nur Desktop)
       deleting: false,
       tick: 0,                    // ändert sich beim Tageswechsel, damit „heute“ neu berechnet wird
 
@@ -912,6 +1058,10 @@
 
         // Offener Bereich bleibt beim Neuladen erhalten; Profil gibt es nur auf dem Handy
         const mobileMq = matchMedia('(max-width: 767.98px)');
+        const deskMq = matchMedia('(min-width: 1024px)');
+        this.desk = deskMq.matches;
+        deskMq.addEventListener('change', e => { this.desk = e.matches; if (!e.matches) this.peek = null; });
+        this.$watch('tab', () => { this.peek = null; });
         try { const t = sessionStorage.getItem('migralog-tab'); if (t === 'hist' || (mobileMq.matches && t === 'profile')) this.tab = t; } catch (_) {}
         this.$watch('tab', t => { try { sessionStorage.setItem('migralog-tab', t); } catch (_) {} });
         mobileMq.addEventListener('change', e => { if (!e.matches && this.tab === 'profile') this.tab = 'today'; });
@@ -1240,6 +1390,18 @@
           streak, best,
         };
       },
+      // Top-5-Auslöser an Kopfschmerztagen im gewählten Zeitraum, mit Balkenbreite in %
+      topTriggers() {
+        const count = {};
+        for (const e of this.inRange().filter(isMigraine)) for (const t of e.triggers || []) count[t] = (count[t] || 0) + 1;
+        const top = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        const max = top.length ? top[0][1] : 1;
+        return top.map(([name, n]) => ({ name, n, pct: Math.round(n / max * 100) }));
+      },
+      openPeek(iso) { if (iso <= this.today()) { this.peek = iso; this.confirmDelete = null; } },
+      closePeek() { this.peek = null; this.confirmDelete = null; },
+      hasDataOf: e => hasData(e),
+      addDaysOf: (iso, n) => addDays(iso, n),
       medDaysThisMonth() {
         const m = this.today().slice(0, 7);
         return this.entries.filter(e => e.entry_date.startsWith(m) && (e.meds || []).length).length;
