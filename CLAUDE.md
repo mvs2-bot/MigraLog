@@ -9,7 +9,7 @@ Kein Build, kein npm: reines HTML/CSS/JS, Alpine.js + supabase-js per CDN. Sprac
 - Vor dem PR selbst prüfen: JS-Syntax, Alpine-Bindings ↔ Methoden/Konstanten, IDs, Design-Tokens, Dark Mode, Handy + Desktop.
 - Bei Änderung an Architektur, Dateistruktur oder Schema diese Datei im selben PR anpassen (max. 150 Zeilen).
 - Keine Secrets. Nur der öffentliche Publishable Key (`sb_publishable_…`) ist erlaubt; niemals `service_role`/secret Key.
-- Bei jeder Änderung an gecachten Dateien Cache-Version in `sw.js` hochzählen (`V=P+"vNN"`, aktuell `v8`).
+- Bei jeder Änderung an gecachten Dateien Cache-Version in `sw.js` hochzählen (`V=P+"vNN"`, aktuell `v9`).
 
 ## Dateien
 | Datei | Inhalt |
@@ -37,6 +37,7 @@ Neue gecachte Datei → in `CORE` von `sw.js` aufnehmen und Version erhöhen.
 | Helfer `isOffline`, `withTimeout` | `const withTimeout` |
 | Komponente: `init`, `bootWatch`, `loadMe`, `checkAccess`, `submitAuth`, `signOut` | `async init` |
 | Daten: `loadEntries`, `save`, `send`, `flushQueue`, `deleteEntry`, `goTo` | `async save` |
+| Export: `exportCsv` (alle Einträge), `exportPdf` (Zeitraum aus Verlauf, Druckansicht `#printSheet` + `window.print`, S/W-Balken 0–5, CSS `@media print`) | `exportPdf` |
 | Start-Notbremse (8 s „Neu laden“) | `Neu laden` |
 
 Konstanten, die das Markup braucht, werden in der Komponente durchgereicht (`ACCOUNT_URL, ADMIN_URL, IC, …` nahe `migraLog()`).

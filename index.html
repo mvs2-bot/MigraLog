@@ -262,6 +262,7 @@
     /* ---------------- Verlauf ---------------- */
     .list { padding: 0; overflow: hidden; }
     .list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; }
+    .list-acts { display: flex; gap: 6px; }
     .entry + .entry { border-top: 1px solid var(--sep); }
     .entry summary { list-style: none; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 16px; cursor: pointer; transition: background .15s; }
     .entry summary::-webkit-details-marker { display: none; }
@@ -444,6 +445,37 @@
 
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } .spin { animation: spin 1.6s linear infinite !important; } }
     @media (prefers-reduced-transparency: reduce) { header { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+    /* Druckansicht (PDF-Export): bewusst reines Schwarz auf Weiß, Stärke als Balkenlänge statt Farbe.
+       Gefüllte Segmente über dicke Rahmen, damit sie auch ohne „Hintergrundgrafiken drucken“ erscheinen. */
+    #printSheet { display: none; }
+    @media print {
+      @page { size: A4; margin: 14mm 12mm; }
+      body > *:not(#printSheet) { display: none !important; }
+      html, body { background: #fff !important; }
+      #printSheet { display: block; color: #000; font: 9.5pt/1.35 var(--font); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      #printSheet h1 { font: 600 17pt/1.2 var(--serif); margin: 0 0 2pt; }
+      #printSheet .ps-meta { margin: 0 0 10pt; font-size: 9pt; }
+      #printSheet .ps-sum { display: flex; flex-wrap: wrap; gap: 4pt 18pt; margin: 0 0 8pt; padding: 6pt 0; border-top: 1pt solid #000; border-bottom: 1pt solid #000; }
+      #printSheet .ps-sum b { font-size: 11pt; }
+      #printSheet .ps-legend { display: flex; flex-wrap: wrap; gap: 3pt 12pt; margin: 0 0 10pt; font-size: 8pt; }
+      #printSheet .ps-legend > span { display: inline-flex; align-items: center; gap: 4pt; }
+      #printSheet table { width: 100%; border-collapse: collapse; }
+      #printSheet thead { display: table-header-group; }
+      #printSheet th { text-align: left; font-size: 8pt; font-weight: 600; padding: 3pt 4pt; border-bottom: 1pt solid #000; }
+      #printSheet td { vertical-align: top; padding: 4pt; border-bottom: .5pt solid #000; }
+      #printSheet tr { break-inside: avoid; }
+      #printSheet .ps-date { white-space: nowrap; }
+      #printSheet .ps-pain { white-space: nowrap; }
+      #printSheet .ps-pain b { display: inline-block; width: 1.4em; text-align: right; margin-left: 3pt; }
+      #printSheet .ps-bar { display: inline-flex; vertical-align: middle; }
+      #printSheet .ps-bar i { box-sizing: border-box; width: 4.6mm; height: 3mm; border: .5pt solid #000; margin-left: -.5pt; }
+      #printSheet .ps-bar i:first-child { margin-left: 0; }
+      #printSheet .ps-bar i.on { border-width: 3mm 0 0; }
+      #printSheet .ps-det span { display: block; }
+      #printSheet .ps-det em { font-style: normal; font-weight: 600; }
+      #printSheet .ps-foot { margin-top: 10pt; font-size: 7.5pt; }
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -550,6 +582,7 @@
           <a class="pm-item" href="/" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Dashboard</a>
           <a class="pm-item" :href="ACCOUNT_URL" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Kontoeinstellungen</a>
           <a class="pm-item" :href="ADMIN_URL" role="menuitem" x-show="me.role === 'admin'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin-Einstellungen<small>nur Admins</small></a>
+          <button class="pm-item" type="button" role="menuitem" x-show="view === 'app'" @click="exportPdf()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>Kopfschmerzkalender drucken<small>PDF</small></button>
           <button class="pm-item" type="button" role="menuitem" x-show="view === 'app'" @click="exportCsv()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Kopfschmerzkalender exportieren<small>CSV</small></button>
           <div class="pm-sep"></div>
           <button class="pm-item danger" type="button" role="menuitem" @click="signOut()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>Abmelden</button>
@@ -866,9 +899,10 @@
         <article class="card list" x-show="!loadingList">
           <div class="list-head">
             <h3>Einträge</h3>
-            <button type="button" class="btn ghost small" @click="exportCsv()" :disabled="!filled().length">
-              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export für den Arzt
-            </button>
+            <div class="list-acts">
+              <button type="button" class="btn ghost small" @click="exportPdf()" :disabled="!inRange().length" title="Zeitraum als PDF für den Arzt (Schwarz-Weiß-Druck)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>PDF</button>
+              <button type="button" class="btn ghost small" @click="exportCsv()" :disabled="!filled().length" title="Alle Einträge als CSV"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>CSV</button>
+            </div>
           </div>
           <p x-show="!inRange().length" class="empty" x-text="filled().length ? 'Keine Einträge in diesem Zeitraum.' : 'Noch keine Einträge. Dein erster wartet unter „Heute“.'"></p>
           <template x-for="g in byMonth()" :key="g.key">
@@ -946,6 +980,7 @@
         <a class="pm-item" href="/"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Dashboard</a>
           <a class="pm-item" :href="ACCOUNT_URL"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Kontoeinstellungen</a>
           <a class="pm-item" :href="ADMIN_URL" x-show="me.role === 'admin'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin-Einstellungen<small>nur Admins</small></a>
+          <button class="pm-item" type="button" @click="exportPdf()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>Kopfschmerzkalender drucken<small>PDF</small></button>
           <button class="pm-item" type="button" @click="exportCsv()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Kopfschmerzkalender exportieren<small>CSV</small></button>
           <div class="pm-sep"></div>
           <button class="pm-item danger" type="button" @click="signOut()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>Abmelden</button>
@@ -1549,6 +1584,46 @@
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       },
 
+      // Kopfschmerzkalender als PDF über die Druckansicht (Zeitraum aus dem Verlauf, für Schwarz-Weiß-Druck)
+      exportPdf() {
+        const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+        const bar = p => '<span class="ps-bar">' + [1, 2, 3, 4, 5].map(n => `<i${n <= p ? ' class="on"' : ''}></i>`).join('') + '</span>';
+        const d = iso => fmt(iso, { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const list = [...this.inRange()].reverse(), st = this.stats();
+        const b = this.bounds(this.range) || (list.length ? [list[0].entry_date, list[list.length - 1].entry_date] : null);
+        const medDays = list.filter(e => (e.meds || []).length).length, count = {};
+        for (const e of list.filter(isMigraine)) for (const t of e.triggers || []) count[t] = (count[t] || 0) + 1;
+        const top = Object.keys(count).sort((x, y) => count[y] - count[x])[0] || '–';
+        const rows = list.map(e => {
+          const p = e.pain === null || e.pain === undefined ? null : Math.min(e.pain, 5);
+          const det = [
+            ['Ort', (e.locations || []).join(', ')], ['Symptome', (e.symptoms || []).join(', ')],
+            ['Auslöser', (e.triggers || []).join(', ')], ['Notiz', (e.note || '').trim()],
+          ].filter(x => x[1]).map(x => `<span><em>${x[0]}:</em> ${esc(x[1])}</span>`).join('');
+          const med = (e.meds || []).length ? esc(e.meds.join(', ')) + (e.med_time ? ' · ' + hhmm(e.med_time) : '') + (EFFECTS[e.med_effect] ? '<br>' + EFFECTS[e.med_effect] : '') : '–';
+          const kind = [TYPES.find(t => t.id === e.headache_type)?.label, PHASES.find(x => x.id === e.phase)?.long, e.started_at && 'ab ' + hhmm(e.started_at)].filter(Boolean).map(esc).join('<br>') || '–';
+          return `<tr><td class="ps-date">${fmt(e.entry_date, { weekday: 'short' })} ${d(e.entry_date)}</td>`
+            + `<td class="ps-pain">${p === null ? '–' : bar(p) + '<b>' + p + '</b>'}</td><td>${kind}</td><td>${med}</td>`
+            + `<td>${esc(IMPACTS[e.impact] ?? '–')}</td><td class="ps-det">${det || '–'}</td></tr>`;
+        }).join('');
+        document.getElementById('printSheet').innerHTML = `
+          <h1>Kopfschmerzkalender</h1>
+          <p class="ps-meta">${esc(this.me.name)} · Zeitraum ${b ? d(b[0]) + ' – ' + d(b[1]) : '–'} · erstellt am ${d(this.today())}</p>
+          <div class="ps-sum">
+            <span>Kopfschmerztage <b>${list.filter(isMigraine).length}</b></span><span>Ø Stärke <b>${st.avg}</b> / 5</span>
+            <span>Tage mit Medikation <b>${medDays}</b></span><span>Häufigster Auslöser <b>${esc(top)}</b></span>
+          </div>
+          <div class="ps-legend">${PAIN_WORDS.map((w, i) => `<span>${bar(i)} ${i} ${w}</span>`).join('')}</div>
+          <table><thead><tr><th>Datum</th><th>Stärke</th><th>Art / Phase</th><th>Medikation</th><th>Alltag</th><th>Details</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="6">Keine Einträge in diesem Zeitraum.</td></tr>'}</tbody></table>
+          <p class="ps-foot">KopfschmerzTracker · Stärke 0–5 (Balkenlänge) · ${list.length} ${list.length === 1 ? 'Eintrag' : 'Einträge'}</p>`;
+        // Dateiname beim „Als PDF sichern“ kommt aus dem Seitentitel
+        const title = document.title;
+        document.title = `KopfschmerzTracker_${this.today()}`;
+        window.addEventListener('afterprint', () => { document.title = title; }, { once: true });
+        setTimeout(() => window.print(), 50);   // Menü erst schließen lassen
+      },
+
       longDate: iso => fmt(iso, { day: 'numeric', month: 'long', year: 'numeric' }),
       shortDate: iso => fmt(iso, { day: 'numeric', month: 'long' }),
       weekday: iso => fmt(iso, { weekday: 'long' }),
@@ -1565,5 +1640,6 @@
   }, 8000);
   if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 </script>
+<div id="printSheet" x-ignore aria-hidden="true"></div>
 </body>
 </html>
