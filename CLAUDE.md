@@ -57,8 +57,8 @@ Neue Konstante im Markup → dort ergänzen.
 - Login nur mit vorhandenem Konto (Admin legt an). Konto/Admin-Seiten liegen im Dashboard (`/konto.html`, `/admin.html`).
 
 ## Offline & lokale Daten
-- Ungesendete Einträge in einer Warteschlange in `localStorage` (`queueKey()`), `flushQueue()` schickt nach.
-- Weitere Keys: `migralog-me-<uid>` (Profil-Cache), Zugangs-Cache, `overall-theme` (app-übergreifend).
+- Ungesendete Einträge in einer Warteschlange in `localStorage` (`migralog-queue-<uid>`), `flushQueue()` schickt nach.
+- Weitere Keys: `migralog-me-<uid>` (Profil-Cache), `migralog-access-<uid>` (Zugangs-Cache), `overall-theme` (app-übergreifend).
 - Netzaufrufe mit `withTimeout`; Offline-Fehler über `isOffline` erkennen, nie endlos laden.
 
 ## Design-Tokens (`:root`, Dark über Klasse `.dark` auf `<html>`)
