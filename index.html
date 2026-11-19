@@ -131,8 +131,8 @@
 
     /* Verlauf-Raster: auf dem Handy eine Spalte in fester Reihenfolge */
     .dash { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "head" "stats" "medhint" "cal" "recent"; }
-    .a-head { grid-area: head; } .a-stats { grid-area: stats; } .a-cal { grid-area: cal; } .a-recent { grid-area: recent; } .a-medhint { grid-area: medhint; }
+      grid-template-areas: "head" "stats" "medhint" "cal" "trend" "recent"; }
+    .a-head { grid-area: head; } .a-trend { grid-area: trend; } .a-stats { grid-area: stats; } .a-cal { grid-area: cal; } .a-recent { grid-area: recent; } .a-medhint { grid-area: medhint; }
     .seg.small { display: inline-grid; } .seg.small button { min-height: 30px; padding: 4px 12px; font-size: 12px; }
 
     /* ---------------- Erfassung ---------------- */
@@ -316,6 +316,15 @@
     .meter i.over { background: var(--lv3); }
     .meter u { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 2px; background: var(--ink); opacity: .55; }
     .meter-legend { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--mute); }
+    /* 12-Monats-Trend: Höhe = Kopfschmerztage, Farbe = Ø Stärke */
+    .trend { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; align-items: end; height: 150px; margin-top: 12px; }
+    .trend button { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; padding: 0; border: 0; background: none; font: inherit; color: var(--mute); cursor: pointer; }
+    .trend b { font-size: 11px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .trend i { display: block; width: 100%; max-width: 28px; min-height: 3px; border-radius: 6px 6px 3px 3px; background: var(--c); transition: height .25s; }
+    .trend span { font-size: 11px; line-height: 1.2; padding: 2px 0; border-radius: 6px; width: 100%; text-align: center; }
+    .trend button[aria-pressed="true"] span { background: var(--p1-soft); color: var(--p1); font-weight: 600; }
+    .trend button:focus-visible { outline: 2px solid var(--p1); outline-offset: 2px; border-radius: 8px; }
+    .trend-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; font-size: 11px; color: var(--mute); }
     .peek-bg { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .18); }
     .peek { position: fixed; z-index: 51; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw; overflow-y: auto; background: var(--card); box-shadow: var(--pop); padding: 20px 24px 28px; }
     .peek-head { display: flex; align-items: center; gap: 8px; }
@@ -382,7 +391,7 @@
       .a-insight { display: block; grid-area: insight; }
       .peek-bg, .peek { display: block; }
       .dash { gap: 20px; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
-        grid-template-areas: "head head" "stats stats" "medhint medhint" "cal recent" "cal insight"; grid-template-rows: auto auto auto auto 1fr; align-items: start; }
+        grid-template-areas: "head head" "stats stats" "medhint medhint" "trend trend" "cal recent" "cal insight"; grid-template-rows: auto auto auto auto 1fr; align-items: start; }
       .card { padding: 20px; }
       .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
       .stat { padding: 18px 20px; }
@@ -475,7 +484,7 @@
   const SYMPTOMS  = ['Lichtempfindlich', 'Lärmempfindlich', 'Übelkeit', 'Erbrechen', 'Schwindel', 'Sehstörungen', 'Geruchsempfindlich', 'Kribbeln', 'Erschöpfung'];
   const TRIGGERS  = ['Stress', 'Schlafmangel', 'Wetter/Druck', 'Nahrungsmittel', 'Bildschirmzeit', 'Zu wenig getrunken', 'Mahlzeit ausgelassen', 'Koffein', 'Gerüche', 'Sport'];
   const LOCATIONS = ['Links', 'Rechts', 'Beidseitig', 'Stirn', 'Hinter dem Auge', 'Schläfe', 'Nacken'];
-  const MEDS      = ['Kaffee', 'Ibuprofen', 'Paracetamol', 'ASS', 'Triptan', 'Naproxen', 'Mittel gegen Übelkeit'];
+  const MEDS      = ['Kaffee', 'Ibuprofen'];   // ältere Werte in Einträgen bleiben gültig
   const EFFECTS   = ['Keine Wirkung', 'Etwas besser', 'Gut geholfen'];
   const IMPACTS   = ['Kaum', 'Eingeschränkt', 'Ging gar nicht'];
   const PAIN_WORDS = ['schmerzfrei', 'leicht', 'spürbar', 'mittel', 'stark', 'sehr stark'];
@@ -698,14 +707,7 @@
             <template x-for="s in medOptions()" :key="s">
               <button type="button" class="chip" :aria-pressed="entry.meds.includes(s)" @click="toggle('meds', s)" x-text="s"></button>
             </template>
-            <button type="button" class="chip add" x-show="!adding.meds" @click="adding.meds = true; $nextTick(() => $refs.medIn.focus())">
-              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Anderes
-            </button>
           </div>
-          <form class="chip-input" x-show="adding.meds" x-cloak @submit.prevent="addCustom('meds', $refs.medIn); adding.meds = false">
-            <input x-ref="medIn" type="text" maxlength="40" placeholder="z. B. Sumatriptan 50 mg" aria-label="Eigenes Medikament" @keydown.escape="adding.meds = false">
-            <button type="submit" class="btn small">Hinzufügen</button>
-          </form>
           <div class="inline" x-show="entry.meds.length" x-cloak>
             <label class="time">Eingenommen um
               <input type="time" :value="entry.med_time || ''" @change="entry.med_time = $event.target.value || null; queueSave()">
@@ -839,6 +841,23 @@
           <span><i style="background: var(--lv2)"></i>Mittel 3</span>
           <span><i style="background: var(--lv3)"></i>Stark 4–5</span>
         </div>
+      </article>
+
+      <!-- Trend der letzten 12 Monate; Tippen wählt den Monat -->
+      <article class="card a-trend" aria-label="Trend der letzten 12 Monate">
+        <h3>Letzte 12 Monate</h3>
+        <div class="trend">
+          <template x-for="t in monthTrend()" :key="t.ym">
+            <button type="button" :aria-pressed="range === 'month' && t.ym === calMonth" @click="calMonth = t.ym; range = 'month'"
+                    :style="'--c: var(--lv' + t.lv + ')'"
+                    :aria-label="monthLabel(t.ym) + ': ' + t.days + (t.days === 1 ? ' Kopfschmerztag' : ' Kopfschmerztage') + (t.avg !== null ? ', Ø ' + t.avgTxt + ' von 5' : '')">
+              <b x-text="t.days || ''"></b>
+              <i :style="'height:' + t.h + '%'"></i>
+              <span x-text="t.short"></span>
+            </button>
+          </template>
+        </div>
+        <p class="trend-legend"><span>Höhe: Kopfschmerztage</span><span>Farbe: Ø Schmerzstärke</span></p>
       </article>
 
       <!-- Einträge im Zeitraum -->
@@ -1046,7 +1065,6 @@
       saveState: 'idle',          // idle | pending | saving | saved | offline | error
       saveTimer: null,
       lastSync: null,
-      adding: { meds: false },
       calMonth: toISO(new Date()).slice(0, 7),
       confirmDelete: null,
       desk: false,                // Desktop-Layout ab 1024 px
@@ -1239,7 +1257,6 @@
         for (const k of FIELDS) if (e[k] !== undefined && e[k] !== null) n[k] = Array.isArray(n[k]) ? [...e[k]] : e[k];
         n.started_at = hhmm(n.started_at); n.med_time = hhmm(n.med_time); n.note = n.note || '';
         this.entry = n;
-        this.adding = { meds: false };
         this.open = null;
       },
 
@@ -1362,7 +1379,7 @@
         return [...base, ...extra, ...this.entry[k].filter(v => !base.includes(v) && !extra.includes(v))];
       },
       options(f) { return this.usedValues(f.key, f.list, f.custom ? 6 : 0); },
-      medOptions() { return this.usedValues('meds', MEDS, 6); },
+      medOptions() { return this.usedValues('meds', MEDS, 0); },   // nur MEDS + im Eintrag schon gewählte Altwerte
 
       async goTo(iso) {
         if (this.saveState === 'pending') await this.save();
@@ -1374,7 +1391,12 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },
       shiftDay(n) { const iso = addDays(this.date, n); if (iso <= this.today()) this.goTo(iso); },
-      shiftMonth(n) { const m = monthOf(this.calMonth, n); if (m <= this.today().slice(0, 7)) this.calMonth = m; },
+      shiftMonth(n) {
+        const m = monthOf(this.calMonth, n);
+        if (m > this.today().slice(0, 7)) return;
+        this.calMonth = m;
+        if (this.tab === 'hist' && this.range !== 'year') this.range = 'month';   // Statistik folgt dem Kalender
+      },
 
       // ------------------------------------------------------------
       // Auswertung
@@ -1391,10 +1413,11 @@
       entryWord(e) { return isMigraine(e) ? (e.pain !== null && e.pain !== undefined ? 'Schmerz ' + e.pain + ' von 5' : TYPES.find(t => t.id === e.headache_type)?.label || PHASES.find(p => p.id === e.phase)?.long) : 'schmerzfrei'; },
 
       // Zeitraum [von, bis] als ISO-Datum; back = 1 für den Zeitraum davor. 'all' → null
+      // Monat und Jahr folgen dem Kalendermonat (calMonth), die Woche ist immer die laufende
       bounds(id, back = 0) {
-        const t = this.today(), y = +t.slice(0, 4);
+        const t = this.today(), y = +this.calMonth.slice(0, 4);
         if (id === 'week') { const from = addDays(t, -((fromISO(t).getDay() + 6) % 7) - 7 * back); return [from, addDays(from, 6)]; }
-        if (id === 'month') { const m = monthOf(t, -back); return [m + '-01', addDays(monthOf(m + '-01', 1) + '-01', -1)]; }
+        if (id === 'month') { const m = monthOf(this.calMonth, -back); return [m + '-01', addDays(monthOf(m + '-01', 1) + '-01', -1)]; }
         if (id === 'year') return [(y - back) + '-01-01', (y - back) + '-12-31'];
         return null;
       },
@@ -1449,9 +1472,23 @@
       closePeek() { this.peek = null; this.confirmDelete = null; },
       hasDataOf: e => hasData(e),
       addDaysOf: (iso, n) => addDays(iso, n),
+      // Letzte 12 Monate bis heute: Kopfschmerztage, Ø Stärke, Balkenhöhe in % (max. Monat = 100)
+      monthTrend() {
+        const end = this.today().slice(0, 7), list = [];
+        for (let i = 11; i >= 0; i--) {
+          const ym = monthOf(end, -i);
+          const mig = this.entries.filter(e => e.entry_date.startsWith(ym) && isMigraine(e));
+          const v = mig.map(e => e.pain).filter(p => p > 0), avg = v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+          list.push({ ym, days: mig.length, avg, avgTxt: avg !== null ? avg.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : '',
+            lv: !mig.length ? 0 : avg >= 4 ? 3 : avg >= 3 ? 2 : 1, short: fmt(ym + '-01', { month: 'narrow' }) });
+        }
+        const max = Math.max(1, ...list.map(t => t.days));
+        for (const t of list) t.h = Math.round(t.days / max * 85);
+        return list;
+      },
       medDaysThisMonth() {
         const m = this.today().slice(0, 7);
-        return this.entries.filter(e => e.entry_date.startsWith(m) && (e.meds || []).length).length;
+        return this.entries.filter(e => e.entry_date.startsWith(m) && (e.meds || []).some(v => v !== 'Kaffee')).length;
       },
 
       calendarCells() {
