@@ -29,6 +29,7 @@ Gespeichert wird automatisch. Ohne Netz bleibt der Eintrag auf dem Gerät und wi
 - Kalender mit Farbe je Tag: Salbei schmerzfrei, Bernstein 1–2, Orange 3, Himbeere 4–5.
   Die Datenbank erlaubt weiter 0–10; ältere Werte über 5 zählen als stark.
 - Ab 10 Tagen mit Schmerzmitteln im Monat ein sanfter Hinweis (`MED_DAYS_HINT`).
+- Trend der letzten 12 Monate: Balken je Monat (Höhe = Kopfschmerztage, Farbe = Ø Stärke), Tippen wählt den Monat.
 - Export als CSV für den Arzttermin (Profilmenü oder „Verlauf“).
 
 ## Rollen und Datenschutz

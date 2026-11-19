@@ -131,8 +131,8 @@
 
     /* Verlauf-Raster: auf dem Handy eine Spalte in fester Reihenfolge */
     .dash { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: "head" "stats" "medhint" "cal" "recent"; }
-    .a-head { grid-area: head; } .a-stats { grid-area: stats; } .a-cal { grid-area: cal; } .a-recent { grid-area: recent; } .a-medhint { grid-area: medhint; }
+      grid-template-areas: "head" "stats" "medhint" "cal" "trend" "recent"; }
+    .a-head { grid-area: head; } .a-trend { grid-area: trend; } .a-stats { grid-area: stats; } .a-cal { grid-area: cal; } .a-recent { grid-area: recent; } .a-medhint { grid-area: medhint; }
     .seg.small { display: inline-grid; } .seg.small button { min-height: 30px; padding: 4px 12px; font-size: 12px; }
 
     /* ---------------- Erfassung ---------------- */
@@ -316,6 +316,15 @@
     .meter i.over { background: var(--lv3); }
     .meter u { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 2px; background: var(--ink); opacity: .55; }
     .meter-legend { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: var(--mute); }
+    /* 12-Monats-Trend: Höhe = Kopfschmerztage, Farbe = Ø Stärke */
+    .trend { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; align-items: end; height: 150px; margin-top: 12px; }
+    .trend button { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; padding: 0; border: 0; background: none; font: inherit; color: var(--mute); cursor: pointer; }
+    .trend b { font-size: 11px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .trend i { display: block; width: 100%; max-width: 28px; min-height: 3px; border-radius: 6px 6px 3px 3px; background: var(--c); transition: height .25s; }
+    .trend span { font-size: 11px; line-height: 1.2; padding: 2px 0; border-radius: 6px; width: 100%; text-align: center; }
+    .trend button[aria-pressed="true"] span { background: var(--p1-soft); color: var(--p1); font-weight: 600; }
+    .trend button:focus-visible { outline: 2px solid var(--p1); outline-offset: 2px; border-radius: 8px; }
+    .trend-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 10px; font-size: 11px; color: var(--mute); }
     .peek-bg { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .18); }
     .peek { position: fixed; z-index: 51; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw; overflow-y: auto; background: var(--card); box-shadow: var(--pop); padding: 20px 24px 28px; }
     .peek-head { display: flex; align-items: center; gap: 8px; }
@@ -382,7 +391,7 @@
       .a-insight { display: block; grid-area: insight; }
       .peek-bg, .peek { display: block; }
       .dash { gap: 20px; grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
-        grid-template-areas: "head head" "stats stats" "medhint medhint" "cal recent" "cal insight"; grid-template-rows: auto auto auto auto 1fr; align-items: start; }
+        grid-template-areas: "head head" "stats stats" "medhint medhint" "trend trend" "cal recent" "cal insight"; grid-template-rows: auto auto auto auto 1fr; align-items: start; }
       .card { padding: 20px; }
       .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
       .stat { padding: 18px 20px; }
@@ -832,6 +841,23 @@
           <span><i style="background: var(--lv2)"></i>Mittel 3</span>
           <span><i style="background: var(--lv3)"></i>Stark 4–5</span>
         </div>
+      </article>
+
+      <!-- Trend der letzten 12 Monate; Tippen wählt den Monat -->
+      <article class="card a-trend" aria-label="Trend der letzten 12 Monate">
+        <h3>Letzte 12 Monate</h3>
+        <div class="trend">
+          <template x-for="t in monthTrend()" :key="t.ym">
+            <button type="button" :aria-pressed="range === 'month' && t.ym === calMonth" @click="calMonth = t.ym; range = 'month'"
+                    :style="'--c: var(--lv' + t.lv + ')'"
+                    :aria-label="monthLabel(t.ym) + ': ' + t.days + (t.days === 1 ? ' Kopfschmerztag' : ' Kopfschmerztage') + (t.avg !== null ? ', Ø ' + t.avgTxt + ' von 5' : '')">
+              <b x-text="t.days || ''"></b>
+              <i :style="'height:' + t.h + '%'"></i>
+              <span x-text="t.short"></span>
+            </button>
+          </template>
+        </div>
+        <p class="trend-legend"><span>Höhe: Kopfschmerztage</span><span>Farbe: Ø Schmerzstärke</span></p>
       </article>
 
       <!-- Einträge im Zeitraum -->
@@ -1446,6 +1472,20 @@
       closePeek() { this.peek = null; this.confirmDelete = null; },
       hasDataOf: e => hasData(e),
       addDaysOf: (iso, n) => addDays(iso, n),
+      // Letzte 12 Monate bis heute: Kopfschmerztage, Ø Stärke, Balkenhöhe in % (max. Monat = 100)
+      monthTrend() {
+        const end = this.today().slice(0, 7), list = [];
+        for (let i = 11; i >= 0; i--) {
+          const ym = monthOf(end, -i);
+          const mig = this.entries.filter(e => e.entry_date.startsWith(ym) && isMigraine(e));
+          const v = mig.map(e => e.pain).filter(p => p > 0), avg = v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+          list.push({ ym, days: mig.length, avg, avgTxt: avg !== null ? avg.toLocaleString('de-DE', { maximumFractionDigits: 1 }) : '',
+            lv: !mig.length ? 0 : avg >= 4 ? 3 : avg >= 3 ? 2 : 1, short: fmt(ym + '-01', { month: 'narrow' }) });
+        }
+        const max = Math.max(1, ...list.map(t => t.days));
+        for (const t of list) t.h = Math.round(t.days / max * 85);
+        return list;
+      },
       medDaysThisMonth() {
         const m = this.today().slice(0, 7);
         return this.entries.filter(e => e.entry_date.startsWith(m) && (e.meds || []).some(v => v !== 'Kaffee')).length;
