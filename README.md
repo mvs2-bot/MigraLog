@@ -17,7 +17,7 @@ mit wenigen Fingertipps erfassen. Gleiche Designsprache und gleicher Kontozugang
 
 Bereich „Heute“ mit Tageswechsel wie in DailyMind. Schmerzstärke 0–5, Kopfschmerzart (Migräne, Spannungskopfschmerzen,
 stechend, dumpf), Beginn, Begleitsymptome, mögliche Auslöser (auch eigene), Ort und Phase (Warnzeichen/Aura, aktiver Anfall,
-abklingend, schmerzfrei) als kompakte Auswahllisten, Medikation (Kaffee zuerst, auch eigene) mit Einnahmezeit und Wirkung,
+abklingend, schmerzfrei) als kompakte Auswahllisten, Medikation (Kaffee, Ibuprofen) mit Einnahmezeit und Wirkung,
 Einschränkung im Alltag, Notiz.
 Gespeichert wird automatisch. Ohne Netz bleibt der Eintrag auf dem Gerät und wird nachgeschickt.
 

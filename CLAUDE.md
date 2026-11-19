@@ -9,7 +9,7 @@ Kein Build, kein npm: reines HTML/CSS/JS, Alpine.js + supabase-js per CDN. Sprac
 - Vor dem PR selbst prüfen: JS-Syntax, Alpine-Bindings ↔ Methoden/Konstanten, IDs, Design-Tokens, Dark Mode, Handy + Desktop.
 - Bei Änderung an Architektur, Dateistruktur oder Schema diese Datei im selben PR anpassen (max. 150 Zeilen).
 - Keine Secrets. Nur der öffentliche Publishable Key (`sb_publishable_…`) ist erlaubt; niemals `service_role`/secret Key.
-- Bei jeder Änderung an gecachten Dateien Cache-Version in `sw.js` hochzählen (`V=P+"vNN"`, aktuell `v7`).
+- Bei jeder Änderung an gecachten Dateien Cache-Version in `sw.js` hochzählen (`V=P+"vNN"`, aktuell `v8`).
 
 ## Dateien
 | Datei | Inhalt |

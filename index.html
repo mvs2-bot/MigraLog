@@ -475,7 +475,7 @@
   const SYMPTOMS  = ['Lichtempfindlich', 'Lärmempfindlich', 'Übelkeit', 'Erbrechen', 'Schwindel', 'Sehstörungen', 'Geruchsempfindlich', 'Kribbeln', 'Erschöpfung'];
   const TRIGGERS  = ['Stress', 'Schlafmangel', 'Wetter/Druck', 'Nahrungsmittel', 'Bildschirmzeit', 'Zu wenig getrunken', 'Mahlzeit ausgelassen', 'Koffein', 'Gerüche', 'Sport'];
   const LOCATIONS = ['Links', 'Rechts', 'Beidseitig', 'Stirn', 'Hinter dem Auge', 'Schläfe', 'Nacken'];
-  const MEDS      = ['Kaffee', 'Ibuprofen', 'Paracetamol', 'ASS', 'Triptan', 'Naproxen', 'Mittel gegen Übelkeit'];
+  const MEDS      = ['Kaffee', 'Ibuprofen'];   // ältere Werte in Einträgen bleiben gültig
   const EFFECTS   = ['Keine Wirkung', 'Etwas besser', 'Gut geholfen'];
   const IMPACTS   = ['Kaum', 'Eingeschränkt', 'Ging gar nicht'];
   const PAIN_WORDS = ['schmerzfrei', 'leicht', 'spürbar', 'mittel', 'stark', 'sehr stark'];
@@ -698,14 +698,7 @@
             <template x-for="s in medOptions()" :key="s">
               <button type="button" class="chip" :aria-pressed="entry.meds.includes(s)" @click="toggle('meds', s)" x-text="s"></button>
             </template>
-            <button type="button" class="chip add" x-show="!adding.meds" @click="adding.meds = true; $nextTick(() => $refs.medIn.focus())">
-              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Anderes
-            </button>
           </div>
-          <form class="chip-input" x-show="adding.meds" x-cloak @submit.prevent="addCustom('meds', $refs.medIn); adding.meds = false">
-            <input x-ref="medIn" type="text" maxlength="40" placeholder="z. B. Sumatriptan 50 mg" aria-label="Eigenes Medikament" @keydown.escape="adding.meds = false">
-            <button type="submit" class="btn small">Hinzufügen</button>
-          </form>
           <div class="inline" x-show="entry.meds.length" x-cloak>
             <label class="time">Eingenommen um
               <input type="time" :value="entry.med_time || ''" @change="entry.med_time = $event.target.value || null; queueSave()">
@@ -1046,7 +1039,6 @@
       saveState: 'idle',          // idle | pending | saving | saved | offline | error
       saveTimer: null,
       lastSync: null,
-      adding: { meds: false },
       calMonth: toISO(new Date()).slice(0, 7),
       confirmDelete: null,
       desk: false,                // Desktop-Layout ab 1024 px
@@ -1239,7 +1231,6 @@
         for (const k of FIELDS) if (e[k] !== undefined && e[k] !== null) n[k] = Array.isArray(n[k]) ? [...e[k]] : e[k];
         n.started_at = hhmm(n.started_at); n.med_time = hhmm(n.med_time); n.note = n.note || '';
         this.entry = n;
-        this.adding = { meds: false };
         this.open = null;
       },
 
@@ -1362,7 +1353,7 @@
         return [...base, ...extra, ...this.entry[k].filter(v => !base.includes(v) && !extra.includes(v))];
       },
       options(f) { return this.usedValues(f.key, f.list, f.custom ? 6 : 0); },
-      medOptions() { return this.usedValues('meds', MEDS, 6); },
+      medOptions() { return this.usedValues('meds', MEDS, 0); },   // nur MEDS + im Eintrag schon gewählte Altwerte
 
       async goTo(iso) {
         if (this.saveState === 'pending') await this.save();
@@ -1374,7 +1365,12 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },
       shiftDay(n) { const iso = addDays(this.date, n); if (iso <= this.today()) this.goTo(iso); },
-      shiftMonth(n) { const m = monthOf(this.calMonth, n); if (m <= this.today().slice(0, 7)) this.calMonth = m; },
+      shiftMonth(n) {
+        const m = monthOf(this.calMonth, n);
+        if (m > this.today().slice(0, 7)) return;
+        this.calMonth = m;
+        if (this.tab === 'hist' && this.range !== 'year') this.range = 'month';   // Statistik folgt dem Kalender
+      },
 
       // ------------------------------------------------------------
       // Auswertung
@@ -1391,10 +1387,11 @@
       entryWord(e) { return isMigraine(e) ? (e.pain !== null && e.pain !== undefined ? 'Schmerz ' + e.pain + ' von 5' : TYPES.find(t => t.id === e.headache_type)?.label || PHASES.find(p => p.id === e.phase)?.long) : 'schmerzfrei'; },
 
       // Zeitraum [von, bis] als ISO-Datum; back = 1 für den Zeitraum davor. 'all' → null
+      // Monat und Jahr folgen dem Kalendermonat (calMonth), die Woche ist immer die laufende
       bounds(id, back = 0) {
-        const t = this.today(), y = +t.slice(0, 4);
+        const t = this.today(), y = +this.calMonth.slice(0, 4);
         if (id === 'week') { const from = addDays(t, -((fromISO(t).getDay() + 6) % 7) - 7 * back); return [from, addDays(from, 6)]; }
-        if (id === 'month') { const m = monthOf(t, -back); return [m + '-01', addDays(monthOf(m + '-01', 1) + '-01', -1)]; }
+        if (id === 'month') { const m = monthOf(this.calMonth, -back); return [m + '-01', addDays(monthOf(m + '-01', 1) + '-01', -1)]; }
         if (id === 'year') return [(y - back) + '-01-01', (y - back) + '-12-31'];
         return null;
       },
@@ -1451,7 +1448,7 @@
       addDaysOf: (iso, n) => addDays(iso, n),
       medDaysThisMonth() {
         const m = this.today().slice(0, 7);
-        return this.entries.filter(e => e.entry_date.startsWith(m) && (e.meds || []).length).length;
+        return this.entries.filter(e => e.entry_date.startsWith(m) && (e.meds || []).some(v => v !== 'Kaffee')).length;
       },
 
       calendarCells() {
