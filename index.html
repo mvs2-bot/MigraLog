@@ -263,6 +263,16 @@
     .list { padding: 0; overflow: hidden; }
     .list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; }
     .list-acts { display: flex; gap: 6px; }
+    .pdf-wrap { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; }
+    .pdf-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, .25); }
+    .pdf-dlg { position: relative; width: 100%; max-width: 420px; max-height: 100%; overflow-y: auto; box-shadow: var(--pop); }
+    .pdf-hint { margin-top: 4px; font-size: 13px; color: var(--mute); }
+    .pdf-label { margin: 18px 0 8px; font-size: 13px; font-weight: 600; color: var(--text); }
+    .pdf-label small { font-weight: 400; color: var(--mute); }
+    .pdf-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .pdf-dates label { display: grid; gap: 4px; font-size: 12px; color: var(--mute); }
+    .pdf-dates input { min-width: 0; min-height: 40px; padding: 6px 10px; border: 0; border-radius: 10px; background: var(--well); color: var(--ink); font: inherit; font-size: 15px; }
+    .pdf-acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
     .entry + .entry { border-top: 1px solid var(--sep); }
     .entry summary { list-style: none; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 16px; cursor: pointer; transition: background .15s; }
     .entry summary::-webkit-details-marker { display: none; }
@@ -458,15 +468,14 @@
       #printSheet .ps-meta { margin: 0 0 10pt; font-size: 9pt; }
       #printSheet .ps-sum { display: flex; flex-wrap: wrap; gap: 4pt 18pt; margin: 0 0 8pt; padding: 6pt 0; border-top: 1pt solid #000; border-bottom: 1pt solid #000; }
       #printSheet .ps-sum b { font-size: 11pt; }
-      #printSheet .ps-legend { display: flex; flex-wrap: wrap; gap: 3pt 12pt; margin: 0 0 10pt; font-size: 8pt; }
+      #printSheet .ps-legend { display: grid; grid-template-columns: repeat(3, max-content); gap: 4pt 18pt; margin: 0 0 10pt; font-size: 8pt; }
       #printSheet .ps-legend > span { display: inline-flex; align-items: center; gap: 4pt; }
       #printSheet table { width: 100%; border-collapse: collapse; }
       #printSheet thead { display: table-header-group; }
       #printSheet th { text-align: left; font-size: 8pt; font-weight: 600; padding: 3pt 4pt; border-bottom: 1pt solid #000; }
       #printSheet td { vertical-align: top; padding: 4pt; border-bottom: .5pt solid #000; }
       #printSheet tr { break-inside: avoid; }
-      #printSheet .ps-date { white-space: nowrap; }
-      #printSheet .ps-pain { white-space: nowrap; }
+      #printSheet .ps-date, #printSheet .ps-pain { white-space: nowrap; width: 1%; padding-right: 12pt; }
       #printSheet .ps-pain b { display: inline-block; width: 1.4em; text-align: right; margin-left: 3pt; }
       #printSheet .ps-bar { display: inline-flex; vertical-align: middle; }
       #printSheet .ps-bar i { box-sizing: border-box; width: 4.6mm; height: 3mm; border: .5pt solid #000; margin-left: -.5pt; }
@@ -526,6 +535,9 @@
     { key: 'triggers',  label: 'Mögliche Auslöser', list: TRIGGERS, custom: 'Eigener Auslöser' },
     { key: 'locations', label: 'Wo sitzt der Schmerz?', list: LOCATIONS },
   ];
+  // Wählbare Spalten im PDF-Export (Datum ist immer dabei)
+  const PDF_COLS = [{ id: 'pain', label: 'Stärke' }, { id: 'kind', label: 'Art / Phase' }, { id: 'med', label: 'Medikation' }, { id: 'impact', label: 'Alltag' }, { id: 'det', label: 'Details' }];
+  const PDF_RANGES = [{ id: 'month', label: 'Monat' }, { id: '3m', label: '3 Monate' }, { id: 'year', label: 'Jahr' }, { id: 'all', label: 'Alles' }];
   const RANGES = [{ id: 'week', label: 'Woche' }, { id: 'month', label: 'Monat' }, { id: 'year', label: 'Jahr' }, { id: 'all', label: 'Gesamt' }];
   // Ab so vielen Tagen mit Schmerzmitteln im Monat gibt es einen sanften Hinweis (Kopfschmerz durch Medikamentenübergebrauch)
   const MED_DAYS_HINT = 10;
@@ -582,7 +594,7 @@
           <a class="pm-item" href="/" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Dashboard</a>
           <a class="pm-item" :href="ACCOUNT_URL" role="menuitem"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Kontoeinstellungen</a>
           <a class="pm-item" :href="ADMIN_URL" role="menuitem" x-show="me.role === 'admin'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin-Einstellungen<small>nur Admins</small></a>
-          <button class="pm-item" type="button" role="menuitem" x-show="view === 'app'" @click="exportPdf()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>Kopfschmerzkalender drucken<small>PDF</small></button>
+          <button class="pm-item" type="button" role="menuitem" x-show="view === 'app'" @click="openPdf()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>Kopfschmerzkalender drucken<small>PDF</small></button>
           <button class="pm-item" type="button" role="menuitem" x-show="view === 'app'" @click="exportCsv()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Kopfschmerzkalender exportieren<small>CSV</small></button>
           <div class="pm-sep"></div>
           <button class="pm-item danger" type="button" role="menuitem" @click="signOut()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>Abmelden</button>
@@ -900,7 +912,7 @@
           <div class="list-head">
             <h3>Einträge</h3>
             <div class="list-acts">
-              <button type="button" class="btn ghost small" @click="exportPdf()" :disabled="!inRange().length" title="Zeitraum als PDF für den Arzt (Schwarz-Weiß-Druck)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>PDF</button>
+              <button type="button" class="btn ghost small" @click="openPdf()" :disabled="!filled().length" title="Als PDF für den Arzt (Schwarz-Weiß-Druck)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>PDF</button>
               <button type="button" class="btn ghost small" @click="exportCsv()" :disabled="!filled().length" title="Alle Einträge als CSV"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>CSV</button>
             </div>
           </div>
@@ -980,7 +992,7 @@
         <a class="pm-item" href="/"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Dashboard</a>
           <a class="pm-item" :href="ACCOUNT_URL"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Kontoeinstellungen</a>
           <a class="pm-item" :href="ADMIN_URL" x-show="me.role === 'admin'"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.5 3 8.3 7 10 4-1.7 7-5.5 7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin-Einstellungen<small>nur Admins</small></a>
-          <button class="pm-item" type="button" @click="exportPdf()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>Kopfschmerzkalender drucken<small>PDF</small></button>
+          <button class="pm-item" type="button" @click="openPdf()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2M6 14h12v7H6z"/></svg>Kopfschmerzkalender drucken<small>PDF</small></button>
           <button class="pm-item" type="button" @click="exportCsv()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Kopfschmerzkalender exportieren<small>CSV</small></button>
           <div class="pm-sep"></div>
           <button class="pm-item danger" type="button" @click="signOut()"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>Abmelden</button>
@@ -988,6 +1000,42 @@
     </section>
   </main>
 </div>
+
+<!-- PDF-Export: Auswahl von Spalten und schmerzfreien Tagen -->
+<template x-if="pdfOpen">
+  <div class="pdf-wrap" @keydown.escape.window="pdfOpen = false">
+    <div class="pdf-bg" @click="pdfOpen = false"></div>
+    <section class="card pdf-dlg" role="dialog" aria-modal="true" aria-labelledby="pdfTitle" x-init="$nextTick(() => $el.querySelector('.btn:not(.ghost)').focus())">
+      <h3 id="pdfTitle">PDF für den Druck</h3>
+      <p class="pdf-label">Zeitraum</p>
+      <div class="seg" role="group" aria-label="Zeitraum">
+        <template x-for="r in PDF_RANGES" :key="r.id">
+          <button type="button" :aria-pressed="pdfPreset(r.id).join() === pdfFrom + ',' + pdfTo" @click="[pdfFrom, pdfTo] = pdfPreset(r.id)" x-text="r.label"></button>
+        </template>
+      </div>
+      <div class="pdf-dates">
+        <label>Von <input type="date" x-model="pdfFrom" :max="pdfTo || today()"></label>
+        <label>Bis <input type="date" x-model="pdfTo" :min="pdfFrom" :max="today()"></label>
+      </div>
+      <p class="pdf-hint" x-text="pdfCount() + (pdfCount() === 1 ? ' Eintrag' : ' Einträge') + (pdfFrom || pdfTo ? ' im Zeitraum' : ' insgesamt')"></p>
+      <p class="pdf-label">Schmerzfreie Tage (0)</p>
+      <div class="seg" role="group" aria-label="Schmerzfreie Tage">
+        <button type="button" :aria-pressed="pdfOpt.free" @click="pdfOpt.free = true">Mit exportieren</button>
+        <button type="button" :aria-pressed="!pdfOpt.free" @click="pdfOpt.free = false">Weglassen</button>
+      </div>
+      <p class="pdf-label">Spalten <small>Datum ist immer dabei</small></p>
+      <div class="chips" role="group" aria-label="Spalten">
+        <template x-for="c in PDF_COLS" :key="c.id">
+          <button type="button" class="chip" :aria-pressed="pdfOpt.cols.includes(c.id)" @click="pdfOpt.cols = pdfOpt.cols.includes(c.id) ? pdfOpt.cols.filter(x => x !== c.id) : [...pdfOpt.cols, c.id]" x-text="c.label"></button>
+        </template>
+      </div>
+      <div class="pdf-acts">
+        <button type="button" class="btn ghost" @click="pdfOpen = false">Abbrechen</button>
+        <button type="button" class="btn" @click="exportPdf()" :disabled="!pdfCount()">PDF erstellen</button>
+      </div>
+    </section>
+  </div>
+</template>
 
 <!-- Desktop: Eintrag aus dem Verlauf als Seitenfeld -->
 <template x-if="desk && peek && tab === 'hist'">
@@ -1079,7 +1127,7 @@
       view: 'loading',            // loading | config | auth | noaccess | app
       dark: document.documentElement.classList.contains('dark'),
       user: null,
-      ACCOUNT_URL, ADMIN_URL, IC, TYPES, PHASES, PICKERS, RANGES, EFFECTS, IMPACTS, PAIN_WORDS, MED_DAYS_HINT,
+      ACCOUNT_URL, ADMIN_URL, IC, TYPES, PHASES, PICKERS, RANGES, PDF_COLS, PDF_RANGES, EFFECTS, IMPACTS, PAIN_WORDS, MED_DAYS_HINT,
       menuOpen: false,
       me: { name: '', initials: '', color: AVATAR_COLORS[0], photo: null, role: null },
 
@@ -1092,6 +1140,9 @@
       bootFail: false,
       booted: false,
       range: 'month',             // Zeitraum der Auswertung im Verlauf
+      pdfOpen: false,             // Auswahlfenster PDF-Export
+      pdfFrom: '', pdfTo: '',     // Zeitraum des PDF (leer = offen)
+      pdfOpt: (() => { try { return { free: true, cols: PDF_COLS.map(c => c.id), ...JSON.parse(localStorage.getItem('migralog-pdf')) }; } catch (_) { return { free: true, cols: PDF_COLS.map(c => c.id) }; } })(),
       open: null,                 // offene Auswahlliste
       date: toISO(new Date()),
       entry: emptyEntry(),
@@ -1584,16 +1635,38 @@
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
       },
 
+      // Schnellauswahl Zeitraum (bis heute); 'all' = offen
+      pdfPreset(id) {
+        const t = this.today();
+        if (id === 'month') return [t.slice(0, 8) + '01', t];
+        if (id === '3m') return [monthOf(t, -2) + '-01', t];
+        if (id === 'year') return [t.slice(0, 5) + '01-01', t];
+        return ['', ''];
+      },
+      pdfBounds() { return this.pdfFrom || this.pdfTo ? [this.pdfFrom || '0000-01-01', this.pdfTo || '9999-12-31'] : null; },
+      pdfCount() { return this.within(this.pdfBounds()).filter(e => this.pdfOpt.free || isMigraine(e)).length; },
+      openPdf() {
+        const b = this.bounds(this.range);   // Vorschlag: Zeitraum aus dem Verlauf
+        [this.pdfFrom, this.pdfTo] = b ? [b[0], b[1] < this.today() ? b[1] : this.today()] : ['', ''];
+        this.pdfOpen = true;
+      },
+
       // Kopfschmerzkalender als PDF über die Druckansicht (Zeitraum aus dem Verlauf, für Schwarz-Weiß-Druck)
       exportPdf() {
         const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
         const bar = p => '<span class="ps-bar">' + [1, 2, 3, 4, 5].map(n => `<i${n <= p ? ' class="on"' : ''}></i>`).join('') + '</span>';
         const d = iso => fmt(iso, { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const list = [...this.inRange()].reverse(), st = this.stats();
-        const b = this.bounds(this.range) || (list.length ? [list[0].entry_date, list[list.length - 1].entry_date] : null);
-        const medDays = list.filter(e => (e.meds || []).length).length, count = {};
-        for (const e of list.filter(isMigraine)) for (const t of e.triggers || []) count[t] = (count[t] || 0) + 1;
+        const opt = this.pdfOpt, all = this.within(this.pdfBounds()).reverse();
+        this.pdfOpen = false;
+        try { localStorage.setItem('migralog-pdf', JSON.stringify(opt)); } catch (_) {}
+        const list = opt.free ? all : all.filter(isMigraine);
+        const b = [this.pdfFrom || all[0]?.entry_date, this.pdfTo || all[all.length - 1]?.entry_date];
+        const pains = all.filter(e => e.pain > 0).map(e => Math.min(e.pain, 5));
+        const avg = pains.length ? (pains.reduce((x, y) => x + y, 0) / pains.length).toLocaleString('de-DE', { maximumFractionDigits: 1 }) : '–';
+        const medDays = all.filter(e => (e.meds || []).length).length, count = {};
+        for (const e of all.filter(isMigraine)) for (const t of e.triggers || []) count[t] = (count[t] || 0) + 1;
         const top = Object.keys(count).sort((x, y) => count[y] - count[x])[0] || '–';
+        const cols = PDF_COLS.filter(c => opt.cols.includes(c.id));
         const rows = list.map(e => {
           const p = e.pain === null || e.pain === undefined ? null : Math.min(e.pain, 5);
           const det = [
@@ -1602,21 +1675,23 @@
           ].filter(x => x[1]).map(x => `<span><em>${x[0]}:</em> ${esc(x[1])}</span>`).join('');
           const med = (e.meds || []).length ? esc(e.meds.join(', ')) + (e.med_time ? ' · ' + hhmm(e.med_time) : '') + (EFFECTS[e.med_effect] ? '<br>' + EFFECTS[e.med_effect] : '') : '–';
           const kind = [TYPES.find(t => t.id === e.headache_type)?.label, PHASES.find(x => x.id === e.phase)?.long, e.started_at && 'ab ' + hhmm(e.started_at)].filter(Boolean).map(esc).join('<br>') || '–';
-          return `<tr><td class="ps-date">${fmt(e.entry_date, { weekday: 'short' })} ${d(e.entry_date)}</td>`
-            + `<td class="ps-pain">${p === null ? '–' : bar(p) + '<b>' + p + '</b>'}</td><td>${kind}</td><td>${med}</td>`
-            + `<td>${esc(IMPACTS[e.impact] ?? '–')}</td><td class="ps-det">${det || '–'}</td></tr>`;
+          const cell = {
+            pain: `<td class="ps-pain">${p === null ? '–' : bar(p) + '<b>' + p + '</b>'}</td>`, kind: `<td>${kind}</td>`, med: `<td>${med}</td>`,
+            impact: `<td>${esc(IMPACTS[e.impact] ?? '–')}</td>`, det: `<td class="ps-det">${det || '–'}</td>`,
+          };
+          return `<tr><td class="ps-date">${fmt(e.entry_date, { weekday: 'short' })} ${d(e.entry_date)}</td>${cols.map(c => cell[c.id]).join('')}</tr>`;
         }).join('');
         document.getElementById('printSheet').innerHTML = `
           <h1>Kopfschmerzkalender</h1>
-          <p class="ps-meta">${esc(this.me.name)} · Zeitraum ${b ? d(b[0]) + ' – ' + d(b[1]) : '–'} · erstellt am ${d(this.today())}</p>
+          <p class="ps-meta">${esc(this.me.name)} · Zeitraum ${b[0] ? d(b[0]) + ' – ' + d(b[1]) : '–'} · erstellt am ${d(this.today())}</p>
           <div class="ps-sum">
-            <span>Kopfschmerztage <b>${list.filter(isMigraine).length}</b></span><span>Ø Stärke <b>${st.avg}</b> / 5</span>
+            <span>Kopfschmerztage <b>${list.filter(isMigraine).length}</b></span><span>Ø Stärke <b>${avg}</b> / 5</span>
             <span>Tage mit Medikation <b>${medDays}</b></span><span>Häufigster Auslöser <b>${esc(top)}</b></span>
           </div>
-          <div class="ps-legend">${PAIN_WORDS.map((w, i) => `<span>${bar(i)} ${i} ${w}</span>`).join('')}</div>
-          <table><thead><tr><th>Datum</th><th>Stärke</th><th>Art / Phase</th><th>Medikation</th><th>Alltag</th><th>Details</th></tr></thead>
-          <tbody>${rows || '<tr><td colspan="6">Keine Einträge in diesem Zeitraum.</td></tr>'}</tbody></table>
-          <p class="ps-foot">KopfschmerzTracker · Stärke 0–5 (Balkenlänge) · ${list.length} ${list.length === 1 ? 'Eintrag' : 'Einträge'}</p>`;
+          ${opt.cols.includes('pain') ? `<div class="ps-legend">${PAIN_WORDS.map((w, i) => `<span>${bar(i)} ${i} ${w}</span>`).join('')}</div>` : ''}
+          <table><thead><tr><th class="ps-date">Datum</th>${cols.map(c => `<th${c.id === 'pain' ? ' class="ps-pain"' : ''}>${c.label}</th>`).join('')}</tr></thead>
+          <tbody>${rows || `<tr><td colspan="${cols.length + 1}">Keine Einträge in diesem Zeitraum.</td></tr>`}</tbody></table>
+          <p class="ps-foot">KopfschmerzTracker · Stärke 0–5 (Balkenlänge) · ${list.length} ${list.length === 1 ? 'Eintrag' : 'Einträge'}${opt.free ? '' : ' (ohne schmerzfreie Tage)'}</p>`;
         // Dateiname beim „Als PDF sichern“ kommt aus dem Seitentitel
         const title = document.title;
         document.title = `KopfschmerzTracker_${this.today()}`;
